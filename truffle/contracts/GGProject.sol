@@ -1,9 +1,11 @@
 pragma solidity ^0.4.17;
 
 import "./ERC20.sol";
+import "./SafeMath.sol";
 
 
 contract GGProject {
+  using SafeMath for uint256;
 
   enum State {
     New,
@@ -84,6 +86,30 @@ contract GGProject {
   function activate() public allowOnly(client) atState(State.New) {
     // TODO
     state = State.Active;
+  }
+
+  function describe() external view returns (
+    State _state,
+    uint256 _totalWorkItems,
+    uint256 _workItemPrice,
+    uint256 _tokenBalance,
+    uint256 _workItemsBalance,
+    uint256 _workItemsLeft,
+    uint256 _requiredInitialTokenBalance,
+    bool _canForceFinalize
+  ) {
+    _state = state;
+    _totalWorkItems = totalWorkItems;
+    _workItemPrice = workItemPrice;
+    _tokenBalance = getTokenBalance();
+    _workItemsBalance = getWorkItemsBalance();
+    _workItemsLeft = getWorkItemsLeft();
+    _requiredInitialTokenBalance = getRequiredInitialTokenBalance();
+    _canForceFinalize = getCanForceFinalize();
+  }
+
+  function getRequiredInitialTokenBalance() public view returns (uint256) {
+    return workItemPrice.mul(totalWorkItems);
   }
 
   function getTokenBalance() public view returns (uint) {

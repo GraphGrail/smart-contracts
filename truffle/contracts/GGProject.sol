@@ -81,6 +81,31 @@ contract GGProject {
     autoApprovalTimeoutSec = uint32(_autoApprovalTimeoutSec);
   }
 
+  function activate() public allowOnly(client) atState(State.New) {
+    // TODO
+    state = State.Active;
+  }
+
+  function getTokenBalance() public view returns (uint) {
+    // TODO
+    return 0;
+  }
+
+  function getWorkItemsBalance() public view returns (uint) {
+    // TODO
+    return 0;
+  }
+
+  function getWorkItemsLeft() public view returns (uint) {
+    // TODO
+    return 0;
+  }
+
+  function getCanForceFinalize() public view returns (bool) {
+    // TODO
+    return false;
+  }
+
   function getPerformance() external view returns (address[], uint[], uint[], uint[]) {
     uint totalContractors = contractors.length;
 
@@ -132,6 +157,16 @@ contract GGProject {
       perf.approvedItems = approvedItems[i];
       perf.declinedItems = declinedItems[i];
     }
+  }
+
+  function finalize() public allowOnly(client) atState(State.Active) {
+    // TODO
+    state = State.Finalized;
+  }
+
+  function forceFinalize() public atState(State.Active) {
+    // TODO
+    state = State.Finalized;
   }
 
 }

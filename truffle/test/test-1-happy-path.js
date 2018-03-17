@@ -11,7 +11,7 @@ import {
   autoApprovalTimeoutSec,
 } from './ggproject-mock-data'
 
-import {States} from './ggproject-utils'
+import {State} from './ggproject-utils'
 
 contract('GGProject', (accounts) => {
 
@@ -69,6 +69,6 @@ contract('GGProject', (accounts) => {
 
   it(`should be started in New state`, async () => {
     const state = await contract.state()
-    assert.equal(state.toNumber(), States.New)
+    assert.equal(state.toNumber(), State.New)
   })
 })

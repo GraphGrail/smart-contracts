@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "compile": "truffle compile",
     "migrate": "truffle migrate --network local",
     "test": "truffle test"
   },

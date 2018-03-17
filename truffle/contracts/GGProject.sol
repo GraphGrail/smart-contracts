@@ -26,13 +26,13 @@ contract GGProject {
   uint16 public disapprovalCommissionFractionThousands;
   uint32 public totalWorkItems;
   uint32 public autoApprovalTimeoutSec;
-  uint public workItemPrice;
+  uint256 public workItemPrice;
 
   struct ContractorPerformance {
     bool isSet;
-    uint16 totalItems;
-    uint16 approvedItems;
-    uint16 declinedItems;
+    uint32 totalItems;
+    uint32 approvedItems;
+    uint32 declinedItems;
   }
 
   mapping(address => ContractorPerformance) public performanceByContractor;
@@ -53,11 +53,11 @@ contract GGProject {
     address _clientAddress,
     address _approvalCommissionBenificiaryAddress,
     address _disapprovalCommissionBeneficiaryAddress,
-    uint _approvalCommissionFractionThousands,
-    uint _disapprovalCommissionFractionThousands,
-    uint _totalWorkItems,
-    uint _workItemPrice,
-    uint _autoApprovalTimeoutSec
+    uint256 _approvalCommissionFractionThousands,
+    uint256 _disapprovalCommissionFractionThousands,
+    uint256 _totalWorkItems,
+    uint256 _workItemPrice,
+    uint256 _autoApprovalTimeoutSec
   ) public {
     require(_tokenContractAddress != 0);
     require(_clientAddress != 0);
@@ -84,7 +84,9 @@ contract GGProject {
   }
 
   function activate() public allowOnly(client) atState(State.New) {
-    // TODO
+    uint256 tokenBalance = getTokenBalance();
+    uint256 requiredInitialTokenBalance = getRequiredInitialTokenBalance();
+    require(tokenBalance >= requiredInitialTokenBalance);
     state = State.Active;
   }
 
@@ -112,17 +114,16 @@ contract GGProject {
     return workItemPrice.mul(totalWorkItems);
   }
 
-  function getTokenBalance() public view returns (uint) {
+  function getTokenBalance() public view returns (uint256) {
+    return tokenContract.balanceOf(address(this));
+  }
+
+  function getWorkItemsBalance() public view returns (uint256) {
     // TODO
     return 0;
   }
 
-  function getWorkItemsBalance() public view returns (uint) {
-    // TODO
-    return 0;
-  }
-
-  function getWorkItemsLeft() public view returns (uint) {
+  function getWorkItemsLeft() public view returns (uint256) {
     // TODO
     return 0;
   }
@@ -132,14 +133,14 @@ contract GGProject {
     return false;
   }
 
-  function getPerformance() external view returns (address[], uint[], uint[], uint[]) {
-    uint totalContractors = contractors.length;
+  function getPerformance() external view returns (address[], uint256[], uint256[], uint256[]) {
+    uint256 totalContractors = contractors.length;
 
-    uint[] memory totalItems = new uint[](totalContractors);
-    uint[] memory approvedItems = new uint[](totalContractors);
-    uint[] memory declinedItems = new uint[](totalContractors);
+    uint256[] memory totalItems = new uint256[](totalContractors);
+    uint256[] memory approvedItems = new uint256[](totalContractors);
+    uint256[] memory declinedItems = new uint256[](totalContractors);
 
-    for (uint i = 0; i < totalContractors; i++) {
+    for (uint256 i = 0; i < totalContractors; i++) {
       address addr = contractors[i];
       ContractorPerformance storage perf = performanceByContractor[addr];
       totalItems[i] = perf.totalItems;
@@ -150,10 +151,15 @@ contract GGProject {
     return (contractors, totalItems, approvedItems, declinedItems);
   }
 
-  function updateTotals(address[] contractorAddrs, uint16[] totalItems) public allowOnly(owner) {
+  function updateTotals(address[] contractorAddrs, uint256[] totalItems) public
+    allowOnly(owner)
+    atState(State.Active)
+  {
     require(contractorAddrs.length == totalItems.length);
 
-    for (uint i = 0; i < contractorAddrs.length; i++) {
+    uint256 i;
+
+    for (i = 0; i < contractorAddrs.length; i++) {
       address addr = contractorAddrs[i];
       ContractorPerformance storage perf = performanceByContractor[addr];
 
@@ -162,26 +168,51 @@ contract GGProject {
         contractors.push(addr);
       }
 
-      perf.totalItems = totalItems[i];
+      uint256 newTotalItems = totalItems[i];
+
+      require(newTotalItems >= perf.totalItems);
+      require(newTotalItems < 2 ** 32);
+
+      perf.totalItems = uint32(newTotalItems);
     }
+
+    uint totalCompletedItems = 0;
+
+    for (i = 0; i < contractors.length; i++) {
+      totalCompletedItems = totalCompletedItems.add(
+        performanceByContractor[contractors[i]].totalItems
+      );
+    }
+
+    require(totalCompletedItems <= totalWorkItems);
   }
 
   function updatePerformance(
     address[] contractorAddrs,
-    uint16[] approvedItems,
-    uint16[] declinedItems
+    uint256[] approvedItems,
+    uint256[] declinedItems
   ) public
     allowOnly(client)
+    atState(State.Active)
   {
     require(contractorAddrs.length == approvedItems.length);
     require(contractorAddrs.length == declinedItems.length);
 
-    for (uint i = 0; i < contractorAddrs.length; i++) {
+    for (uint256 i = 0; i < contractorAddrs.length; i++) {
       address addr = contractorAddrs[i];
       ContractorPerformance storage perf = performanceByContractor[addr];
       require(perf.isSet);
-      perf.approvedItems = approvedItems[i];
-      perf.declinedItems = declinedItems[i];
+
+      uint256 newApprovedItems = approvedItems[i];
+      uint256 newDeclinedItems = declinedItems[i];
+
+      uint256 newTotalItems = newApprovedItems.add(newDeclinedItems);
+      require(newTotalItems == perf.totalItems);
+
+      // We know both these numbers fit into uint32 since their sum
+      // equals to perf.totalItems, which is itself uint32.
+      perf.approvedItems = uint32(approvedItems[i]);
+      perf.declinedItems = uint32(declinedItems[i]);
     }
   }
 

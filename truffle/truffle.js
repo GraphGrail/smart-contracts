@@ -1,3 +1,5 @@
+require('babel-register')
+
 const GAS_LIMIT = 4712388
 const GWEI = 1000000000
 

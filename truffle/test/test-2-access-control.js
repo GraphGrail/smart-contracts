@@ -74,9 +74,24 @@ contract('GGProject', (accounts) => {
   it(`only client activates contract`, async () => {
     await assertRevert(contract.activate({from: addr.contractor_1}))
     await assertRevert(contract.activate({from: addr.graphGrail}))
-    // await assertRevert(contract.activate({from: addr.client}))
-    // const state = await contract.state()
-    // assert.equal(state.toNumber(), State.New)
+
+    await contract.activate({from: addr.client})
+    const state = await contract.state()
+    assert.equal(state.toNumber(), State.Active)
+  })
+
+  it(`only owner updates total on contract`, async () => {
+    const {addresses, totals} = totalsToArrays(getMockTotals())
+    await assertRevert(contract.updateTotals(addresses, totals, {from: addr.contractor_1}))
+    await assertRevert(contract.updateTotals(addresses, totals, {from: addr.client}))
+    
+    await contract.updateTotals(addresses, totals, {from: addr.graphGrail})
+
+    const perfMap = performanceToMap(await contract.getPerformance())
+
+    assert.equal(perfMap[addr.contractor_1].totalItems, '1')
+    assert.equal(perfMap[addr.contractor_2].totalItems, '2')
+    assert.equal(perfMap[addr.contractor_3].totalItems, '3')
   })
 
 

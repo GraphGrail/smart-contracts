@@ -55,3 +55,26 @@ export function performanceToArrays(performanceMap) {
 
   return {addresses, approved, declined}
 }
+
+export function describeToMap(rawDescribe) {
+  const [state, totalWorkItems, workItemPrice, tokenBalance, workItemsBalance, workItemsLeft,
+          requiredInitialTokenBalance,canForceFinalize] = rawDescribe
+  return {state,
+          totalWorkItems,
+          workItemPrice,
+          tokenBalance,
+          workItemsBalance,
+          workItemsLeft,
+          requiredInitialTokenBalance,
+          canForceFinalize,
+        }
+}
+
+export async function status(contract) {
+  const [rawDescribe, rawPerformance] = await Promise.all([contract.describe(), contract.getPerformance()])
+  return {
+    ...describeToMap(rawDescribe),
+    performance: performanceToMap(rawPerformance),
+  }
+}
+

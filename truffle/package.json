@@ -5,7 +5,8 @@
   "scripts": {
     "compile": "truffle compile",
     "migrate": "truffle migrate --network local",
-    "test": "truffle test"
+    "test": "truffle test",
+    "test-local": "truffle test --network local"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",

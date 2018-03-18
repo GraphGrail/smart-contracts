@@ -26,6 +26,7 @@ contract GGProject {
   uint16 public disapprovalCommissionFractionThousands;
   uint32 public totalWorkItems;
   uint32 public autoApprovalTimeoutSec;
+  uint64 public lastClientActivity;
   uint256 public workItemPrice;
 
   struct ContractorPerformance {
@@ -86,8 +87,11 @@ contract GGProject {
   function activate() public allowOnly(client) atState(State.New) {
     uint256 tokenBalance = getTokenBalance();
     uint256 requiredInitialTokenBalance = getRequiredInitialTokenBalance();
+
     require(tokenBalance >= requiredInitialTokenBalance);
+
     state = State.Active;
+    lastClientActivity = getTimestamp();
   }
 
   function describe() external view returns (
@@ -119,18 +123,18 @@ contract GGProject {
   }
 
   function getWorkItemsBalance() public view returns (uint256) {
-    // TODO
-    return 0;
+    return getTokenBalance().div(workItemPrice);
   }
 
   function getWorkItemsLeft() public view returns (uint256) {
-    // TODO
-    return 0;
+    uint32 totalPendingItems;
+    (, totalPendingItems) = _getPerformanceTotals();
+    // We know this won't wrap around zero, see comments in _getPerformanceTotals.
+    return totalWorkItems - totalPendingItems;
   }
 
   function getCanForceFinalize() public view returns (bool) {
-    // TODO
-    return false;
+    return getTimestamp() - lastClientActivity >= autoApprovalTimeoutSec;
   }
 
   function getPerformance() external view returns (address[], uint256[], uint256[], uint256[]) {
@@ -176,7 +180,7 @@ contract GGProject {
       perf.totalItems = uint32(newTotalItems);
     }
 
-    uint totalCompletedItems = 0;
+    uint256 totalCompletedItems = 0;
 
     for (i = 0; i < contractors.length; i++) {
       totalCompletedItems = totalCompletedItems.add(
@@ -214,16 +218,73 @@ contract GGProject {
       perf.approvedItems = uint32(approvedItems[i]);
       perf.declinedItems = uint32(declinedItems[i]);
     }
+
+    lastClientActivity = getTimestamp();
   }
 
   function finalize() public allowOnly(client) atState(State.Active) {
-    // TODO
-    state = State.Finalized;
+    uint32 totalPendingItems;
+    (, totalPendingItems) = _getPerformanceTotals();
+    require(totalPendingItems == 0);
+    _finalizeAndRefundClient();
   }
 
   function forceFinalize() public atState(State.Active) {
-    // TODO
-    state = State.Finalized;
+    require(getCanForceFinalize());
+
+    for (uint256 i = 0; i < contractors.length; i++) {
+      ContractorPerformance storage perf = performanceByContractor[contractors[i]];
+      uint32 pendingItems = perf.totalItems - perf.approvedItems - perf.declinedItems;
+      if (pendingItems > 0) {
+        perf.approvedItems += pendingItems;
+      }
+    }
+
+    _finalizeAndRefundClient();
   }
 
+  function _finalizeAndRefundClient() internal {
+    state = State.Finalized;
+    _refundClient();
+  }
+
+  function _refundClient() internal {
+    uint256 tokenBalance = getTokenBalance();
+    if (tokenBalance > 0) {
+      assert(tokenContract.transfer(client, tokenBalance));
+    }
+  }
+
+  // Returns (uint32 totalApprovedItems, uint32 totalPendingItems).
+  //
+  function _getPerformanceTotals() internal view returns (uint32, uint32) {
+    uint32 totalApprovedItems = 0;
+    uint32 totalPendingItems = 0;
+
+    for (uint256 i = 0; i < contractors.length; i++) {
+      ContractorPerformance storage perf = performanceByContractor[contractors[i]];
+      // We know that sum of approvedItems and declinedItems is less than or equal to
+      // totalItems since we're checking this in updatePerformance, which is the only
+      // place these values get updated.
+      uint32 pendingItems = perf.totalItems - perf.approvedItems - perf.declinedItems;
+      // We know that sum of perf.totalItems for all contractors is less than totalWorkItems,
+      // which is uint32, since we're checking this in updateTotals, which is the only place
+      // perf.totalItems get updated. So we know that both sum of all perf.approvedItems and
+      // and sum of all pendingItems fit into uint32, since both of these values are less
+      // than or equal to perf.totalItems (see above).
+      totalApprovedItems += perf.approvedItems;
+      totalPendingItems += pendingItems;
+    }
+
+    return (totalApprovedItems, totalPendingItems);
+  }
+
+  // We can rely on the value of block.timestamp for our purposes, as the consensus
+  // rule is that a block's timestamp must be 1) more than the parent's block timestamp;
+  // and 2) less than the current wall clock time. See:
+  // https://github.com/ethereum/go-ethereum/blob/885c13c/consensus/ethash/consensus.go#L223
+  //
+  function getTimestamp() internal view returns (uint64) {
+    return uint64(block.timestamp);
+  }
 }

@@ -107,6 +107,7 @@ contract GGProject {
     uint256 _workItemsBalance,
     uint256 _workItemsLeft,
     uint256 _requiredInitialTokenBalance,
+    bool _canFinalize,
     bool _canForceFinalize
   ) {
     _state = state;
@@ -116,6 +117,7 @@ contract GGProject {
     _workItemsBalance = getWorkItemsBalance();
     _workItemsLeft = getWorkItemsLeft();
     _requiredInitialTokenBalance = getRequiredInitialTokenBalance();
+    _canFinalize = getCanFinalize();
     _canForceFinalize = getCanForceFinalize();
   }
 
@@ -137,6 +139,12 @@ contract GGProject {
     (totalApprovedItems, totalPendingItems) = _getPerformanceTotals();
     // We know this won't wrap around zero, see comments in _getPerformanceTotals.
     return totalWorkItems - totalApprovedItems - totalPendingItems;
+  }
+
+  function getCanFinalize() public view returns (bool) {
+    uint32 totalPendingItems;
+    (, totalPendingItems) = _getPerformanceTotals();
+    return totalPendingItems == 0;
   }
 
   function getCanForceFinalize() public view returns (bool) {
@@ -234,9 +242,7 @@ contract GGProject {
   }
 
   function finalize() public allowOnly(client) atState(State.Active) {
-    uint32 totalPendingItems;
-    (, totalPendingItems) = _getPerformanceTotals();
-    require(totalPendingItems == 0);
+    require(getCanFinalize());
     _finalizeAndRefundClient();
   }
 

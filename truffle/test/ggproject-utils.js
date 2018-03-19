@@ -58,7 +58,7 @@ export function performanceToArrays(performanceMap) {
 
 export function describeToMap(rawDescribe) {
   const [state, totalWorkItems, workItemPrice, tokenBalance, workItemsBalance, workItemsLeft,
-          requiredInitialTokenBalance,canForceFinalize] = rawDescribe
+          requiredInitialTokenBalance, canFinalize, canForceFinalize] = rawDescribe
   return {state,
           totalWorkItems,
           workItemPrice,
@@ -66,6 +66,7 @@ export function describeToMap(rawDescribe) {
           workItemsBalance,
           workItemsLeft,
           requiredInitialTokenBalance,
+          canFinalize,
           canForceFinalize,
         }
 }

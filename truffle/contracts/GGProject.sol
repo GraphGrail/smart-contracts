@@ -234,10 +234,31 @@ contract GGProject {
       uint256 newTotalItems = newApprovedItems.add(newDeclinedItems);
       require(newTotalItems == perf.totalItems);
 
+      uint256 dApprovedItems = newApprovedItems - perf.approvedItems;
+      uint256 dDeclinedItems = newDeclinedItems - perf.declinedItems;
+
+      if (dApprovedItems != 0) {
+        uint256 totalFeeAmount = workItemPrice.mul(dApprovedItems);
+        _splitTransferTokens(
+          totalFeeAmount,
+          approvalCommissionFractionThousands,
+          approvalCommissionBenificiary,
+          addr
+        );
+      }
+
+      if (dDeclinedItems != 0) {
+        uint256 commissionAmount = workItemPrice
+          .mul(dDeclinedItems)
+          .mul(disapprovalCommissionFractionThousands)
+          .div(1000);
+        require(tokenContract.transfer(disapprovalCommissionBeneficiary, commissionAmount));
+      }
+
       // We know both these numbers fit into uint32 since their sum
       // equals to perf.totalItems, which is itself uint32.
-      perf.approvedItems = uint32(approvedItems[i]);
-      perf.declinedItems = uint32(declinedItems[i]);
+      perf.approvedItems = uint32(newApprovedItems);
+      perf.declinedItems = uint32(newDeclinedItems);
     }
 
     lastClientActivity = getTimestamp();
@@ -253,14 +274,39 @@ contract GGProject {
     require(getCanForceFinalize());
 
     for (uint256 i = 0; i < contractors.length; i++) {
-      ContractorPerformance storage perf = performanceByContractor[contractors[i]];
+      address contractorAddr = contractors[i];
+      ContractorPerformance storage perf = performanceByContractor[contractorAddr];
       uint32 pendingItems = perf.totalItems - perf.approvedItems - perf.declinedItems;
       if (pendingItems > 0) {
         perf.approvedItems += pendingItems;
+        uint256 totalFeeAmount = workItemPrice.mul(pendingItems);
+        _splitTransferTokens(
+          totalFeeAmount,
+          approvalCommissionFractionThousands,
+          approvalCommissionBenificiary,
+          contractorAddr
+        );
       }
     }
 
     _finalizeAndRefundClient();
+  }
+
+  function _splitTransferTokens(
+    uint256 amount,
+    uint256 fractionThousandsA,
+    address addressA,
+    address addressB
+  ) internal
+  {
+    uint256 amountA = amount.mul(fractionThousandsA).div(1000);
+    uint256 amountB = amount.sub(amountA);
+    if (amountA > 0) {
+      require(tokenContract.transfer(addressA, amountA));
+    }
+    if (amountB > 0) {
+      require(tokenContract.transfer(addressB, amountB));
+    }
   }
 
   function _finalizeAndRefundClient() internal {

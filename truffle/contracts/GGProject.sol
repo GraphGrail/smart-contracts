@@ -182,6 +182,7 @@ contract GGProject {
       ContractorPerformance storage perf = performanceByContractor[addr];
 
       if (!perf.isSet) {
+        // this is a new contractor
         perf.isSet = true;
         contractors.push(addr);
       }
@@ -220,6 +221,8 @@ contract GGProject {
     for (uint256 i = 0; i < contractorAddrs.length; i++) {
       address addr = contractorAddrs[i];
       ContractorPerformance storage perf = performanceByContractor[addr];
+
+      // require that contractor is already known from previous updateTotals() call
       require(perf.isSet);
 
       uint256 newApprovedItems = approvedItems[i];

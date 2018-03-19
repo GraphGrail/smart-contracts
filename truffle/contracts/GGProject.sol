@@ -127,10 +127,11 @@ contract GGProject {
   }
 
   function getWorkItemsLeft() public view returns (uint256) {
+    uint32 totalApprovedItems;
     uint32 totalPendingItems;
-    (, totalPendingItems) = _getPerformanceTotals();
+    (totalApprovedItems, totalPendingItems) = _getPerformanceTotals();
     // We know this won't wrap around zero, see comments in _getPerformanceTotals.
-    return totalWorkItems - totalPendingItems;
+    return totalWorkItems - totalApprovedItems - totalPendingItems;
   }
 
   function getCanForceFinalize() public view returns (bool) {
@@ -209,6 +210,9 @@ contract GGProject {
 
       uint256 newApprovedItems = approvedItems[i];
       uint256 newDeclinedItems = declinedItems[i];
+
+      require(newApprovedItems >= perf.approvedItems);
+      require(newDeclinedItems >= perf.declinedItems);
 
       uint256 newTotalItems = newApprovedItems.add(newDeclinedItems);
       require(newTotalItems == perf.totalItems);

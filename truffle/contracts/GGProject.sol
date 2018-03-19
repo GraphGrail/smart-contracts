@@ -22,6 +22,7 @@ contract GGProject {
 
   address public owner = msg.sender;
   address public client;
+
   ERC20 public tokenContract;
   address public approvalCommissionBenificiary;
   address public disapprovalCommissionBeneficiary;
@@ -133,6 +134,10 @@ contract GGProject {
     return getTokenBalance().div(workItemPrice);
   }
 
+  /**
+   * How many items are either already approved or awaiting client review. That is,
+   * how many items we can additionally distribute between contractors at the moment.
+   */
   function getWorkItemsLeft() public view returns (uint256) {
     uint32 totalApprovedItems;
     uint32 totalPendingItems;
@@ -195,15 +200,16 @@ contract GGProject {
       perf.totalItems = uint32(newTotalItems);
     }
 
-    uint256 totalCompletedItems = 0;
+    // We need to ensure that, after calling updateTotals, we don't end up in a situation
+    // when, if client later approves everything, the total number of approved items will
+    // exceed totalWorkItems. This means that total number of either approved or pending
+    // items should not exceed totalWorkItems.
 
-    for (i = 0; i < contractors.length; i++) {
-      totalCompletedItems = totalCompletedItems.add(
-        performanceByContractor[contractors[i]].totalItems
-      );
-    }
+    uint256 totalApprovedItems;
+    uint256 totalPendingItems;
+    (totalApprovedItems, totalPendingItems) = _getPerformanceTotals();
 
-    require(totalCompletedItems <= totalWorkItems);
+    require(totalApprovedItems + totalPendingItems <= totalWorkItems);
     UpdatedPerformance();
   }
 

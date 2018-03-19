@@ -83,6 +83,8 @@ contract('GGProject', (accounts) => {
   it(`only owner updates total on contract`, async () => {
     const {addresses, totals} = totalsToArrays(getMockTotals())
     await assertRevert(contract.updateTotals(addresses, totals, {from: addr.contractor_1}))
+    await assertRevert(contract.updateTotals(addresses, totals, {from: addr.contractor_2}))
+    await assertRevert(contract.updateTotals(addresses, totals, {from: addr.contractor_3}))
     await assertRevert(contract.updateTotals(addresses, totals, {from: addr.client}))
     
     await contract.updateTotals(addresses, totals, {from: addr.graphGrail})
@@ -94,5 +96,28 @@ contract('GGProject', (accounts) => {
     assert.equal(perfMap[addr.contractor_3].totalItems, '3')
   })
 
+  it(`only client updates performance on contract`, async () => {
+    const {addresses, approved, declined} = performanceToArrays({
+      [addr.contractor_1]: {'approvedItems': '1', 'declinedItems': '0'},
+      [addr.contractor_2]: {'approvedItems': '2', 'declinedItems': '0'},
+      [addr.contractor_3]: {'approvedItems': '3', 'declinedItems': '0'}
+    })
+    await assertRevert(contract.updatePerformance(addresses, approved, declined, {from: addr.graphGrail}))
+    await assertRevert(contract.updatePerformance(addresses, approved, declined, {from: addr.contractor_1}))
+    await assertRevert(contract.updatePerformance(addresses, approved, declined, {from: addr.contractor_2}))
+    await assertRevert(contract.updatePerformance(addresses, approved, declined, {from: addr.contractor_3}))
+    await contract.updatePerformance(addresses, approved, declined, {from: addr.client})
+  })
+
+  it(`only client can finalize contract`, async () => {
+    await assertRevert(contract.finalize({from: addr.graphGrail}))
+    await assertRevert(contract.finalize({from: addr.contractor_1}))
+    await assertRevert(contract.finalize({from: addr.contractor_2}))
+    await assertRevert(contract.finalize({from: addr.contractor_3}))
+
+    await contract.finalize({from: addr.client})
+    const state = await contract.state()
+    assert.equal(state.toNumber(), State.Finalized)
+  })
 
 })

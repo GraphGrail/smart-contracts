@@ -96,7 +96,7 @@ contract GGProject {
 
     state = State.Active;
     lastClientActivity = getTimestamp();
-    emit Activated();
+    Activated();
   }
 
   function describe() external view returns (
@@ -195,7 +195,7 @@ contract GGProject {
     }
 
     require(totalCompletedItems <= totalWorkItems);
-    emit UpdatedPerformance();
+    UpdatedPerformance();
   }
 
   function updatePerformance(
@@ -230,7 +230,7 @@ contract GGProject {
     }
 
     lastClientActivity = getTimestamp();
-    emit UpdatedPerformance();
+    UpdatedPerformance();
   }
 
   function finalize() public allowOnly(client) atState(State.Active) {
@@ -257,7 +257,7 @@ contract GGProject {
   function _finalizeAndRefundClient() internal {
     state = State.Finalized;
     _refundClient();
-    emit Finalized();
+    Finalized();
   }
 
   function _refundClient() internal {

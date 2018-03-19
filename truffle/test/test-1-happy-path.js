@@ -70,12 +70,6 @@ contract('GGProject', (accounts) => {
     )
   })
 
-  it(`client balance should be populated from graphGrail's address`, async () => {
-    await token.transfer(addr.client, new BigNumber('1e20'),{from: addr.graphGrail})
-    const clientBalance = await token.balanceOf(addr.client)
-    assert.equal(clientBalance.toString(), (new BigNumber('1e20')).toString())
-  })
-
   it(`starts with owner set to the creator of the contract`, async () => {
     const owner = await contract.owner()
     assert.equal(owner.toString(), addr.graphGrail)
@@ -86,29 +80,35 @@ contract('GGProject', (accounts) => {
     assert.equal(client.toString(), addr.client)
   })
 
-  it(`should be started in New state`, async () => {
+  it(`starts in New state`, async () => {
     const state = await contract.state()
     assert.equal(state.toNumber(), State.New)
   })
 
-  it(`owner couldn't updateTotals before contract activation`, async () => {
+  it(`owner cannot updateTotals before contract activation`, async () => {
     const {addresses, totals} = totalsToArrays(getMockTotals())
     await assertRevert(contract.updateTotals(addresses, totals, {from: addr.graphGrail}))
   })
 
-  it(`client should be able to send some amount of tokens to the contract`, async () => {
+  it(`populating client's balance from graphGrail's address`, async () => {
+    await token.transfer(addr.client, new BigNumber('1e20'), {from: addr.graphGrail})
+    const clientBalance = await token.balanceOf(addr.client)
+    assert.equal(clientBalance.toString(), (new BigNumber('1e20')).toString())
+  })
+
+  it(`client sends some amount of tokens to the contract`, async () => {
     await token.transfer(contract.address, new BigNumber('1e19'), {from: addr.client})
     const contractBalance = await token.balanceOf(contract.address)
     assert.equal(contractBalance.toString(), (new BigNumber('1e19')).toString())
   })
 
-  it(`client should be able to activate the contract`, async () => {
+  it(`client can activate the contract`, async () => {
     await contract.activate({from: addr.client})
     const state = await contract.state()
     assert.equal(state.toNumber(), State.Active)
   })
 
-  it(`owner should be able to updateTotals while the contract is active`, async () => {
+  it(`owner can call updateTotals while the contract is active`, async () => {
     const {addresses, totals} = totalsToArrays(getMockTotals())
     await contract.updateTotals(addresses, totals, {from: addr.graphGrail})
 
@@ -119,7 +119,7 @@ contract('GGProject', (accounts) => {
     assert.equal(perfMap[addr.contractor_3].totalItems, '3')
   })
 
-  it(`client should be able to updatePerformance`, async () => {
+  it(`client can call updatePerformance while the contract is active`, async () => {
     const {addresses, approved, declined} = performanceToArrays({
       [addr.contractor_1]: {'approvedItems': '1', 'declinedItems': '0'},
       [addr.contractor_2]: {'approvedItems': '2', 'declinedItems': '0'},
@@ -128,7 +128,7 @@ contract('GGProject', (accounts) => {
     await contract.updatePerformance(addresses, approved, declined, {from: addr.client})
   })
 
-  it(`client should be able to finalize the contract`, async () => {
+  it(`client can finalize the contract`, async () => {
     await contract.finalize({from: addr.client})
     const state = await contract.state()
     assert.equal(state.toNumber(), State.Finalized)

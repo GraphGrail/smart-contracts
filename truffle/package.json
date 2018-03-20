@@ -6,8 +6,7 @@
     "compile": "truffle compile",
     "migrate": "truffle migrate --network local",
     "test": "truffle test",
-    "test-local": "truffle test --network local",
-    "test-ac": "truffle test test/test-2-access-control.js"
+    "test-local": "truffle test --network local"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",

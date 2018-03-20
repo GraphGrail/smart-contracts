@@ -90,7 +90,7 @@ contract('GGProject', (accounts) => {
     assert.equal(Object.keys(perfMap).length, 0)
   })
 
-  it(`update totals is updating correctly`, async () => {
+  it(`updates totals correctly`, async () => {
     const {addresses, totals} = totalsToArrays(getMockTotals())
     await contract.updateTotals(addresses, totals, {from: addr.graphGrail})
 
@@ -101,7 +101,7 @@ contract('GGProject', (accounts) => {
     assert.equal(perfMap[addr.contractor_3].totalItems, '3')
   })
 
-  it(`update totals can't decrement totals`, async () => {
+  it(`can't update totals with decremented values`, async () => {
     const {addresses, totals} = totalsToArrays(getMockTotalsDecremented())
     await assertRevert(contract.updateTotals(addresses, totals, {from: addr.graphGrail}))
 
@@ -110,6 +110,55 @@ contract('GGProject', (accounts) => {
     assert.equal(perfMap[addr.contractor_1].totalItems, '1')
     assert.equal(perfMap[addr.contractor_2].totalItems, '2')
     assert.equal(perfMap[addr.contractor_3].totalItems, '3')
+  })
+
+  it(`updates performance correctly`, async () => {
+    const {addresses, approved, declined} = performanceToArrays({
+      [addr.contractor_1]: {'approvedItems': '1', 'declinedItems': '0'},
+      [addr.contractor_2]: {'approvedItems': '2', 'declinedItems': '0'},
+      [addr.contractor_3]: {'approvedItems': '3', 'declinedItems': '0'}
+    })
+    await contract.updatePerformance(addresses, approved, declined, {from: addr.client})
+
+    const perfMap = performanceToMap(await contract.getPerformance())
+
+    assert.equal(perfMap[addr.contractor_1].totalItems, '1')
+    assert.equal(perfMap[addr.contractor_2].totalItems, '2')
+    assert.equal(perfMap[addr.contractor_3].totalItems, '3')
+  })
+
+  it(`can't update performance with decremented values`, async () => {
+    const {addresses, approved, declined} = performanceToArrays({
+      [addr.contractor_1]: {'approvedItems': '0', 'declinedItems': '0'},
+      [addr.contractor_2]: {'approvedItems': '0', 'declinedItems': '0'},
+      [addr.contractor_3]: {'approvedItems': '0', 'declinedItems': '0'}
+    })
+
+    await assertRevert(contract.updatePerformance(addresses, approved, declined, {from: addr.client}))
+  })
+
+  it(`updates totals and performance twice correctly`, async () => {
+    {
+      const {addresses, totals} = totalsToArrays(getMockTotals())
+      await contract.updateTotals(addresses, totals, {from: addr.graphGrail})
+      await contract.updateTotals(addresses, totals, {from: addr.graphGrail})
+    }
+
+    {
+      const {addresses, approved, declined} = performanceToArrays({
+        [addr.contractor_1]: {'approvedItems': '1', 'declinedItems': '0'},
+        [addr.contractor_2]: {'approvedItems': '2', 'declinedItems': '0'},
+        [addr.contractor_3]: {'approvedItems': '3', 'declinedItems': '0'}
+      })
+      await contract.updatePerformance(addresses, approved, declined, {from: addr.client})
+      await contract.updatePerformance(addresses, approved, declined, {from: addr.client})
+      
+      const perfMap = performanceToMap(await contract.getPerformance())
+
+      assert.equal(perfMap[addr.contractor_1].totalItems, '1')
+      assert.equal(perfMap[addr.contractor_2].totalItems, '2')
+      assert.equal(perfMap[addr.contractor_3].totalItems, '3')
+    }
   })
 
 })

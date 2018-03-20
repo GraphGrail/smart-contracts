@@ -109,7 +109,8 @@ contract GGProject {
     uint256 _workItemsLeft,
     uint256 _requiredInitialTokenBalance,
     bool _canFinalize,
-    bool _canForceFinalize
+    bool _canForceFinalize,
+    uint256 _canForceFinalizeAt
   ) {
     _state = state;
     _totalWorkItems = totalWorkItems;
@@ -120,6 +121,7 @@ contract GGProject {
     _requiredInitialTokenBalance = getRequiredInitialTokenBalance();
     _canFinalize = getCanFinalize();
     _canForceFinalize = getCanForceFinalize();
+    _canForceFinalizeAt = getCanForceFinalizeAt();
   }
 
   function getRequiredInitialTokenBalance() public view returns (uint256) {
@@ -152,8 +154,12 @@ contract GGProject {
     return totalPendingItems == 0;
   }
 
+  function getCanForceFinalizeAt() public view returns (uint64) {
+    return lastClientActivity + autoApprovalTimeoutSec;
+  }
+
   function getCanForceFinalize() public view returns (bool) {
-    return getTimestamp() - lastClientActivity >= autoApprovalTimeoutSec;
+    return getTimestamp() >= getCanForceFinalizeAt();
   }
 
   function getPerformance() external view returns (address[], uint256[], uint256[], uint256[]) {

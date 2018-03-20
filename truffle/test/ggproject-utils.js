@@ -57,18 +57,21 @@ export function performanceToArrays(performanceMap) {
 }
 
 export function describeToMap(rawDescribe) {
-  const [state, totalWorkItems, workItemPrice, tokenBalance, workItemsBalance, workItemsLeft,
-          requiredInitialTokenBalance, canFinalize, canForceFinalize] = rawDescribe
-  return {state,
-          totalWorkItems,
-          workItemPrice,
-          tokenBalance,
-          workItemsBalance,
-          workItemsLeft,
-          requiredInitialTokenBalance,
-          canFinalize,
-          canForceFinalize,
-        }
+  const [state, totalWorkItems, workItemPrice, tokenBalance,
+    workItemsBalance, workItemsLeft, requiredInitialTokenBalance,
+    canFinalize, canForceFinalize, canForceFinalizeAt] = rawDescribe
+  return {
+    state,
+    totalWorkItems,
+    workItemPrice,
+    tokenBalance,
+    workItemsBalance,
+    workItemsLeft,
+    requiredInitialTokenBalance,
+    canFinalize,
+    canForceFinalize,
+    canForceFinalizeAt,
+  }
 }
 
 export async function getContractStatus(contract) {

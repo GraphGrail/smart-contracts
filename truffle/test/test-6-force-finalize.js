@@ -20,7 +20,7 @@ import {
   getContractStatus,
 } from './ggproject-utils'
 
-contract('GGProject', (accounts) => {
+contract('GGProject: force finalization checks', (accounts) => {
 
   function getAddresses() {
     const [

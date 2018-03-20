@@ -21,7 +21,7 @@ import {
   performanceToArrays,
 } from './ggproject-utils'
 
-contract('GGProject', (accounts) => {
+contract('GGProject: happy path', (accounts) => {
 
   function getAddresses() {
     const [

@@ -21,7 +21,7 @@ import {
   performanceToArrays,
 } from './ggproject-utils'
 
-contract('GGProject', (accounts) => {
+contract('GGProject: access control', (accounts) => {
 
   function getAddresses() {
     const [

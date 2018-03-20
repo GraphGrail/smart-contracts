@@ -22,7 +22,7 @@ import {
   getContractStatus,
 } from './ggproject-utils'
 
-contract('GG States Check', (accounts) => {
+contract('GGProject: states checks', (accounts) => {
 
   function getAddresses() {
     const [

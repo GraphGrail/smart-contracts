@@ -31,7 +31,7 @@ contract GGProject {
   uint16 public disapprovalCommissionFractionThousands;
   uint32 public totalWorkItems;
   uint32 public autoApprovalTimeoutSec;
-  uint64 public lastClientActivity;
+  uint64 public performanceUpdatedAt;
   uint256 public workItemPrice;
 
   struct ContractorPerformance {
@@ -96,7 +96,7 @@ contract GGProject {
     require(tokenBalance >= requiredInitialTokenBalance);
 
     state = State.Active;
-    lastClientActivity = getTimestamp();
+    performanceUpdatedAt = getTimestamp();
     Activated();
   }
 
@@ -160,7 +160,7 @@ contract GGProject {
 
   function getCanForceFinalizeAt() public view returns (uint64) {
     if (!hasPendingItems()) return 0;
-    return lastClientActivity + autoApprovalTimeoutSec;
+    return performanceUpdatedAt + autoApprovalTimeoutSec;
   }
 
   function getCanForceFinalize() public view returns (bool) {
@@ -221,7 +221,7 @@ contract GGProject {
     (totalApprovedItems, totalPendingItems) = _getPerformanceTotals();
 
     require(totalApprovedItems + totalPendingItems <= totalWorkItems);
-    lastClientActivity = getTimestamp();
+    performanceUpdatedAt = getTimestamp();
     UpdatedPerformance();
   }
 
@@ -279,7 +279,7 @@ contract GGProject {
       perf.declinedItems = uint32(newDeclinedItems);
     }
 
-    lastClientActivity = getTimestamp();
+    performanceUpdatedAt = getTimestamp();
     UpdatedPerformance();
   }
 

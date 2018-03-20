@@ -12,10 +12,7 @@ import {
 } from './ggproject-mock-data'
 
 
-import {
-  assertRevert,
-  getTransactionReceiptMined,
-} from './helpers'
+import {assertRevert} from './helpers'
 
 import {
   State,

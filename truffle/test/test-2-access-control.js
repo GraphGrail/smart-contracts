@@ -12,10 +12,7 @@ import {
 } from './ggproject-mock-data'
 
 
-import {
-  assertRevert,
-  getTransactionReceiptMined,
-} from './helpers'
+import {assertRevert} from './helpers'
 
 import {
   State,
@@ -86,7 +83,7 @@ contract('GGProject', (accounts) => {
     await assertRevert(contract.updateTotals(addresses, totals, {from: addr.contractor_2}))
     await assertRevert(contract.updateTotals(addresses, totals, {from: addr.contractor_3}))
     await assertRevert(contract.updateTotals(addresses, totals, {from: addr.client}))
-    
+
     await contract.updateTotals(addresses, totals, {from: addr.graphGrail})
 
     const perfMap = performanceToMap(await contract.getPerformance())

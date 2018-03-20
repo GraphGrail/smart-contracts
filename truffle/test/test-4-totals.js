@@ -12,10 +12,7 @@ import {
 } from './ggproject-mock-data'
 
 
-import {
-  assertRevert,
-  getTransactionReceiptMined,
-} from './helpers'
+import {assertRevert} from './helpers'
 
 import {
   State,
@@ -61,7 +58,7 @@ contract('GGProject', (accounts) => {
     var totals = 0
     var approved = 0
     var declined = 0
-    Object.keys(perfMap).map(addr => { 
+    Object.keys(perfMap).map(addr => {
       totals += Number(perfMap[addr].totalItems)
       approved += Number(perfMap[addr].approvedItems)
       declined += Number(perfMap[addr].declinedItems)
@@ -146,7 +143,7 @@ contract('GGProject', (accounts) => {
       [addr.contractor_3]: {'approvedItems': '0', 'declinedItems': '0'}
     })
 
-    await assertRevert(contract.updatePerformance(addresses, approved, declined, 
+    await assertRevert(contract.updatePerformance(addresses, approved, declined,
       {from: addr.client}))
   })
 
@@ -165,7 +162,7 @@ contract('GGProject', (accounts) => {
       })
       await contract.updatePerformance(addresses, approved, declined, {from: addr.client})
       await contract.updatePerformance(addresses, approved, declined, {from: addr.client})
-      
+
       const perfMap = performanceToMap(await contract.getPerformance())
 
       assert.equal(perfMap[addr.contractor_1].totalItems, '1')
@@ -179,17 +176,17 @@ contract('GGProject', (accounts) => {
     assert.equal(perfMap[addr.contractor_1].approvedItems, '1')
     assert.equal(perfMap[addr.contractor_1].declinedItems, '0')
 
-    await assertRevert(contract.updatePerformance([addr.contractor_1], [0], [1], 
+    await assertRevert(contract.updatePerformance([addr.contractor_1], [0], [1],
       {from: addr.client}))
-    await assertRevert(contract.updatePerformance([addr.contractor_1], [2], [0], 
+    await assertRevert(contract.updatePerformance([addr.contractor_1], [2], [0],
       {from: addr.client}))
 
     assert.equal(perfMap[addr.contractor_2].approvedItems, '2')
     assert.equal(perfMap[addr.contractor_2].declinedItems, '0')
 
-    await assertRevert(contract.updatePerformance([addr.contractor_2], [1], [1], 
+    await assertRevert(contract.updatePerformance([addr.contractor_2], [1], [1],
       {from: addr.client}))
-    await assertRevert(contract.updatePerformance([addr.contractor_2], [2], [1], 
+    await assertRevert(contract.updatePerformance([addr.contractor_2], [2], [1],
       {from: addr.client}))
   })
 

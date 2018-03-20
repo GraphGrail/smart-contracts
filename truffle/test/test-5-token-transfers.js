@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js'
 import chai from 'chai'
 
-import {assertRevert, getTransactionReceiptMined} from './helpers'
+import {assertRevert} from './helpers'
 
 import {
   State,

@@ -13,58 +13,60 @@ import {
 const {assert} = chai
 
 const GraphGrailToken = artifacts.require('./GraphGrailToken.sol')
-const GGProject = artifacts.require('./GGProject.sol')
+const GGProject = artifacts.require('./GGProjectDebug.sol')
+
+
+function getAddresses(accounts) {
+  const [
+    graphGrail, client,
+    contractor_1, contractor_2,
+    contractor_3, approvalCommissionBeneficiary,
+    disapprovalCommissionBeneficiary,
+  ] = accounts
+  return {
+    graphGrail, client,
+    contractor_1, contractor_2,
+    contractor_3, approvalCommissionBeneficiary,
+    disapprovalCommissionBeneficiary,
+  }
+}
+
+async function getBalances(contract, token, addr) {
+  const [tokenBalance, requiredInitialTokenBalance, workItemsBalance,
+    balanceOf_contract, balanceOf_client,
+    balanceOf_approvalCommission, balanceOf_disapprovalCommission,
+    balanceOf_contractor_1, balanceOf_contractor_2, balanceOf_contractor_3] =
+    await Promise.all([
+      contract.getTokenBalance(),
+      contract.getRequiredInitialTokenBalance(),
+      contract.getWorkItemsBalance(),
+      token.balanceOf(contract.address),
+      token.balanceOf(addr.client),
+      token.balanceOf(addr.approvalCommissionBeneficiary),
+      token.balanceOf(addr.disapprovalCommissionBeneficiary),
+      token.balanceOf(addr.contractor_1),
+      token.balanceOf(addr.contractor_2),
+      token.balanceOf(addr.contractor_3),
+    ])
+  return {
+    tokenBalance, requiredInitialTokenBalance, workItemsBalance,
+    balanceOf_contract, balanceOf_client,
+    balanceOf_approvalCommission, balanceOf_disapprovalCommission,
+    balanceOf_contractor_1, balanceOf_contractor_2, balanceOf_contractor_3,
+  }
+}
+
+
+const totalWorkItems = 100
+const workItemPrice = 10
+const approvalCommissionFractionThousands = 100 // 10% (1)
+const disapprovalCommissionFractionThousands = 200 // 20% (2)
+const autoApprovalTimeoutSec = 86400
 
 
 contract('GGProject: token transfers', (accounts) => {
 
-  function getAddresses() {
-    const [
-      graphGrail, client,
-      contractor_1, contractor_2,
-      contractor_3, approvalCommissionBeneficiary,
-      disapprovalCommissionBeneficiary,
-    ] = accounts
-    return {
-      graphGrail, client,
-      contractor_1, contractor_2,
-      contractor_3, approvalCommissionBeneficiary,
-      disapprovalCommissionBeneficiary,
-    }
-  }
-
-  async function getBalances(contract, token) {
-    const [tokenBalance, requiredInitialTokenBalance, workItemsBalance,
-      balanceOf_contract, balanceOf_client,
-      balanceOf_approvalCommission, balanceOf_disapprovalCommission,
-      balanceOf_contractor_1, balanceOf_contractor_2, balanceOf_contractor_3] =
-      await Promise.all([
-        contract.getTokenBalance(),
-        contract.getRequiredInitialTokenBalance(),
-        contract.getWorkItemsBalance(),
-        token.balanceOf(contract.address),
-        token.balanceOf(addr.client),
-        token.balanceOf(addr.approvalCommissionBeneficiary),
-        token.balanceOf(addr.disapprovalCommissionBeneficiary),
-        token.balanceOf(addr.contractor_1),
-        token.balanceOf(addr.contractor_2),
-        token.balanceOf(addr.contractor_3),
-      ])
-    return {
-      tokenBalance, requiredInitialTokenBalance, workItemsBalance,
-      balanceOf_contract, balanceOf_client,
-      balanceOf_approvalCommission, balanceOf_disapprovalCommission,
-      balanceOf_contractor_1, balanceOf_contractor_2, balanceOf_contractor_3,
-    }
-  }
-
-  const addr = getAddresses()
-  const totalWorkItems = 100
-  const workItemPrice = 10
-  const approvalCommissionFractionThousands = 100 // 10% (1)
-  const disapprovalCommissionFractionThousands = 200 // 20% (2)
-  const autoApprovalTimeoutSec = 86400
-
+  const addr = getAddresses(accounts)
   let contract
   let token
 
@@ -141,7 +143,7 @@ contract('GGProject: token transfers', (accounts) => {
     assert.bignumEqual(balanceOf_client, 0, `token balance of client`)
   })
 
-  it(`updating totals work doesn't change balances`, async () => {
+  it(`updating totals doesn't change balances`, async () => {
     const {addresses, totals} = totalsToArrays({
       [addr.contractor_1]: 1,
       [addr.contractor_2]: 0,
@@ -149,7 +151,7 @@ contract('GGProject: token transfers', (accounts) => {
     })
 
     await contract.updateTotals(addresses, totals, {from: addr.graphGrail})
-    const bal = await getBalances(contract, token)
+    const bal = await getBalances(contract, token, addr)
 
     assert.bignumEqual(bal.tokenBalance, 1000, `contract: token balance`)
     assert.bignumEqual(bal.requiredInitialTokenBalance, 1000, `contract: required initial balance`)
@@ -170,7 +172,7 @@ contract('GGProject: token transfers', (accounts) => {
     })
 
     await contract.updatePerformance(addresses, approved, declined, {from: addr.client})
-    const bal = await getBalances(contract, token)
+    const bal = await getBalances(contract, token, addr)
 
     assert.bignumEqual(bal.tokenBalance, 990, `contract: token balance`)
     assert.bignumEqual(bal.requiredInitialTokenBalance, 1000, `contract: required initial balance`)
@@ -191,7 +193,7 @@ contract('GGProject: token transfers', (accounts) => {
     })
 
     await contract.updatePerformance(addresses, approved, declined, {from: addr.client})
-    const bal = await getBalances(contract, token)
+    const bal = await getBalances(contract, token, addr)
 
     // disapproval commission: 10 * 0.2 = 2
     // new contract balance: 990 - 2 = 988
@@ -218,7 +220,7 @@ contract('GGProject: token transfers', (accounts) => {
     })
 
     await contract.updateTotals(addresses, totals, {from: addr.graphGrail})
-    const bal = await getBalances(contract, token)
+    const bal = await getBalances(contract, token, addr)
 
     // balances are the same as in the previous test
 
@@ -245,7 +247,7 @@ contract('GGProject: token transfers', (accounts) => {
     })
 
     await contract.updatePerformance(addresses, approved, declined, {from: addr.client})
-    const bal = await getBalances(contract, token)
+    const bal = await getBalances(contract, token, addr)
 
     // changes:
     //
@@ -277,7 +279,7 @@ contract('GGProject: token transfers', (accounts) => {
 
   it(`finalizing contract by client sends all unused tokens back to client`, async () => {
     await contract.finalize({from: addr.client})
-    const bal = await getBalances(contract, token)
+    const bal = await getBalances(contract, token, addr)
 
     assert.bignumEqual(bal.tokenBalance, 0, `contract: token balance`)
     assert.bignumEqual(bal.requiredInitialTokenBalance, 1000, `contract: required initial balance`)
@@ -290,5 +292,148 @@ contract('GGProject: token transfers', (accounts) => {
     assert.bignumEqual(bal.balanceOf_contractor_2, 18, `contractor 2 balance`)
     assert.bignumEqual(bal.balanceOf_contractor_3, 9, `contractor 3 balance`)
     assert.bignumEqual(bal.balanceOf_client, 956, `client's balance`)
+  })
+})
+
+
+contract('GGProject: force finalization token transfers', (accounts) => {
+
+  const addr = getAddresses(accounts)
+  let contract
+  let token
+
+  before(async () => {
+    token = await GraphGrailToken.new({from: addr.graphGrail})
+    contract = await GGProject.new(
+      token.address,
+      addr.client,
+      addr.approvalCommissionBeneficiary,
+      addr.disapprovalCommissionBeneficiary,
+      approvalCommissionFractionThousands,
+      disapprovalCommissionFractionThousands,
+      totalWorkItems,
+      workItemPrice,
+      autoApprovalTimeoutSec,
+      {from: addr.graphGrail}
+    )
+
+    // later in tests we assum that initial token balance of client is zero
+    const clientTokenBalance = await token.balanceOf(addr.client)
+    assert.bignumEqual(clientTokenBalance, 0)
+  })
+
+  it(`activating the contract`, async () => {
+    await token.transfer(contract.address, 1000, {from: addr.graphGrail})
+    await contract.activate({from: addr.client})
+  })
+
+  it(`updating totals doesn't change balances`, async () => {
+    const {addresses, totals} = totalsToArrays({
+      [addr.contractor_1]: 1,
+      [addr.contractor_3]: 3,
+    })
+
+    await contract.updateTotals(addresses, totals, {from: addr.graphGrail})
+    const bal = await getBalances(contract, token, addr)
+
+    assert.bignumEqual(bal.tokenBalance, 1000, `contract: token balance`)
+    assert.bignumEqual(bal.requiredInitialTokenBalance, 1000, `contract: required initial balance`)
+    assert.bignumEqual(bal.workItemsBalance, 100, `contract: work items balance`)
+
+    assert.bignumEqual(bal.balanceOf_contract, 1000, `contract's token balance`)
+    assert.bignumEqual(bal.balanceOf_approvalCommission, 0, `approval comm. benef. balance`)
+    assert.bignumEqual(bal.balanceOf_disapprovalCommission, 0, `disapproval comm. benef. balance`)
+    assert.bignumEqual(bal.balanceOf_contractor_1, 0, `contractor 1 balance`)
+    assert.bignumEqual(bal.balanceOf_contractor_2, 0, `contractor 2 balance`)
+    assert.bignumEqual(bal.balanceOf_contractor_3, 0, `contractor 3 balance`)
+    assert.bignumEqual(bal.balanceOf_client, 0, `client's balance`)
+  })
+
+  it(`disapproving work by client holds commission`, async () => {
+    const {addresses, approved, declined} = performanceToArrays({
+      [addr.contractor_1]: {approvedItems: 0, declinedItems: 1}, // was appr: 0, decl: 0, total: 1
+    })
+
+    await contract.updatePerformance(addresses, approved, declined, {from: addr.client})
+    const bal = await getBalances(contract, token, addr)
+
+    assert.bignumEqual(bal.tokenBalance, 998, `contract: token balance`)
+    assert.bignumEqual(bal.requiredInitialTokenBalance, 1000, `contract: required initial balance`)
+    assert.bignumEqual(bal.workItemsBalance, 99, `contract: work items balance`)
+
+    assert.bignumEqual(bal.balanceOf_contract, 998, `contract's token balance`)
+    assert.bignumEqual(bal.balanceOf_approvalCommission, 0, `approval comm. benef. balance`)
+    assert.bignumEqual(bal.balanceOf_disapprovalCommission, 2, `disapproval comm. benef. balance`)
+    assert.bignumEqual(bal.balanceOf_contractor_1, 0, `contractor 1 balance`)
+    assert.bignumEqual(bal.balanceOf_contractor_2, 0, `contractor 2 balance`)
+    assert.bignumEqual(bal.balanceOf_contractor_3, 0, `contractor 3 balance`)
+    assert.bignumEqual(bal.balanceOf_client, 0, `client's balance`)
+  })
+
+  it(`updating totals (once again) doesn't change balances`, async () => {
+    const {addresses, totals} = totalsToArrays({
+      [addr.contractor_1]: 2,
+    })
+
+    await contract.updateTotals(addresses, totals, {from: addr.graphGrail})
+    const bal = await getBalances(contract, token, addr)
+
+    assert.bignumEqual(bal.tokenBalance, 998, `contract: token balance`)
+    assert.bignumEqual(bal.requiredInitialTokenBalance, 1000, `contract: required initial balance`)
+    assert.bignumEqual(bal.workItemsBalance, 99, `contract: work items balance`)
+
+    assert.bignumEqual(bal.balanceOf_contract, 998, `contract's token balance`)
+    assert.bignumEqual(bal.balanceOf_approvalCommission, 0, `approval comm. benef. balance`)
+    assert.bignumEqual(bal.balanceOf_disapprovalCommission, 2, `disapproval comm. benef. balance`)
+    assert.bignumEqual(bal.balanceOf_contractor_1, 0, `contractor 1 balance`)
+    assert.bignumEqual(bal.balanceOf_contractor_2, 0, `contractor 2 balance`)
+    assert.bignumEqual(bal.balanceOf_contractor_3, 0, `contractor 3 balance`)
+    assert.bignumEqual(bal.balanceOf_client, 0, `client's balance`)
+  })
+
+  it(`force-finalizing contract auto-approves all pending work and sends unused tokens ` +
+     `back to client`, async () => {
+
+    await contract.increaseTimeBy(autoApprovalTimeoutSec)
+    const canForceFinalize = await contract.getCanForceFinalize()
+
+    assert.ok(canForceFinalize, `can force finalize`)
+
+    await contract.forceFinalize({from: addr.graphGrail})
+    const bal = await getBalances(contract, token, addr)
+
+    // was:
+    //
+    // contractor 1: total 2, appr 0, decl 1
+    // contractor 2: total 0, appr 0, decl 0
+    // contractor 3: total 3, appr 0, decl 0
+    //
+    // should have became:
+    //
+    // contractor 1: total 2, appr 1, decl 1 (appr +1, decl +0)
+    // contractor 2: total 0, appr 0, decl 0 (appr +0, decl +0)
+    // contractor 3: total 3, appr 3, decl 0 (appr +3, decl +0)
+    //
+    // new balances:
+    //
+    // contract: 0
+    // approval commission beneficiary: 0 + 4 = 4
+    // disapproval commission beneficiary: 2
+    // contractor 1: 0 + 9 = 9
+    // contractor 2: 0
+    // contractor 3: 27
+    // client: 998 - 40 = 958
+
+    assert.bignumEqual(bal.tokenBalance, 0, `contract: token balance`)
+    assert.bignumEqual(bal.requiredInitialTokenBalance, 1000, `contract: required initial balance`)
+    assert.bignumEqual(bal.workItemsBalance, 0, `contract: work items balance`)
+
+    assert.bignumEqual(bal.balanceOf_contract, 0, `contract's token balance`)
+    assert.bignumEqual(bal.balanceOf_approvalCommission, 4, `approval comm. benef. balance`)
+    assert.bignumEqual(bal.balanceOf_disapprovalCommission, 2, `disapproval comm. benef. balance`)
+    assert.bignumEqual(bal.balanceOf_contractor_1, 9, `contractor 1 balance`)
+    assert.bignumEqual(bal.balanceOf_contractor_2, 0, `contractor 2 balance`)
+    assert.bignumEqual(bal.balanceOf_contractor_3, 27, `contractor 3 balance`)
+    assert.bignumEqual(bal.balanceOf_client, 958, `client's balance`)
   })
 })

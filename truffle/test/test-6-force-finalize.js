@@ -11,8 +11,14 @@ import {
   autoApprovalTimeoutSec,
 } from './ggproject-mock-data'
 
+const halfAutoApprovalTimeoutSec = (Number(autoApprovalTimeoutSec) / 2).toString()
+
 import {assertRevert} from './helpers'
-import {totalsToArrays, performanceToArrays} from './ggproject-utils'
+import {
+  totalsToArrays,
+  performanceToArrays,
+  getContractStatus,
+} from './ggproject-utils'
 
 contract('GGProject', (accounts) => {
 
@@ -31,11 +37,11 @@ contract('GGProject', (accounts) => {
     }
   }
 
-  function getMockTotals() {
+  function getMockTotals(addition = 0) {
     return {
-      [addr.contractor_1]: '1',
-      [addr.contractor_2]: '2',
-      [addr.contractor_3]: '3',
+      [addr.contractor_1]: String(1 + addition),
+      [addr.contractor_2]: String(2 + addition),
+      [addr.contractor_3]: String(3 + addition),
     }
   }
 
@@ -48,6 +54,19 @@ contract('GGProject', (accounts) => {
     await assertRevert(contract.forceFinalize({from: addr.approvalCommissionAddr}))
     await assertRevert(contract.forceFinalize({from: addr.disapprovalCommissionAddr}))
     await assertRevert(contract.forceFinalize({from: addr.anonymous}))
+  }
+
+  function addStringsAsNumbers(a, b) {
+    return Number(a) + Number(b)
+  }
+
+  async function assertCanForceFinalizeIn(duration, contract) {
+    const canForceFinalizeAt = await contract.getCanForceFinalizeAt()
+    const timestamp = await contract.debugTimestamp()
+    assert.equal(
+      canForceFinalizeAt.toString(),
+      addStringsAsNumbers(timestamp, duration).toString()
+    )
   }
 
   const addr = getAddresses()
@@ -82,14 +101,20 @@ contract('GGProject', (accounts) => {
     await assertNobodyCanFinalizeContract()
   })
 
+  it(`getCanForceFinalizeAt should be zero`, async () => {
+    const canForceFinalizeAt = await contract.getCanForceFinalizeAt()
+    assert.equal(canForceFinalizeAt.toString(), '0')
+  })
+
   it(`updateTotals call leads to set up the deadline`, async () => {
     const {addresses, totals} = totalsToArrays(getMockTotals())
     await contract.updateTotals(addresses, totals, {from: addr.graphGrail})
+
+    await assertCanForceFinalizeIn(autoApprovalTimeoutSec, contract)
   })
 
   it(`nobody can force finalize before the deadline`, async () => {
-    const rewindTime = (Number(autoApprovalTimeoutSec) / 2).toString()
-    await contract.increaseTimeBy(rewindTime, {from: addr.anonymous})
+    await contract.increaseTimeBy(halfAutoApprovalTimeoutSec, {from: addr.anonymous})
 
     const canForceFinalize = await contract.getCanForceFinalize()
     assert.equal(canForceFinalize, false)
@@ -98,8 +123,7 @@ contract('GGProject', (accounts) => {
   })
 
   it(`canForceFinalize returns true after the deadline`, async () => {
-    const rewindTime = (Number(autoApprovalTimeoutSec) / 2).toString()
-    await contract.increaseTimeBy(rewindTime, {from: addr.anonymous})
+    await contract.increaseTimeBy(halfAutoApprovalTimeoutSec, {from: addr.anonymous})
     const canForceFinalize = await contract.getCanForceFinalize()
     assert.equal(canForceFinalize, true)
   })
@@ -116,17 +140,22 @@ contract('GGProject', (accounts) => {
     assert.equal(canForceFinalize, false)
   })
 
-  it(`updatePerformance call causes moving the deadline forward`, async () => {
-    const {addresses, totals} = totalsToArrays(getMockTotals())
+  it(`updatePerformance and updateTotals calls causes moving the deadline forward`, async () => {
+    let canForceFinalizeAt, timestamp
+
+    const {addresses, totals} = totalsToArrays(getMockTotals(2))
     await contract.updateTotals(addresses, totals, {from: addr.graphGrail})
 
-    await contract.increaseTimeBy(autoApprovalTimeoutSec, {from: addr.anonymous})
+    await assertCanForceFinalizeIn(autoApprovalTimeoutSec, contract)
+    await contract.increaseTimeBy(halfAutoApprovalTimeoutSec, {from: addr.anonymous})
+    await assertCanForceFinalizeIn(halfAutoApprovalTimeoutSec, contract)
 
     const perfMap = performanceToArrays({
-      [addr.contractor_1]: {'approvedItems': '1', 'declinedItems': '0'},
+      [addr.contractor_1]: {'approvedItems': '3', 'declinedItems': '0'},
     })
 
     await contract.updatePerformance(perfMap.addresses, perfMap.approved, perfMap.declined, {from: addr.client})
+    await assertCanForceFinalizeIn(autoApprovalTimeoutSec, contract)
 
     const canForceFinalize = await contract.getCanForceFinalize()
     assert.equal(canForceFinalize, false)
@@ -136,6 +165,9 @@ contract('GGProject', (accounts) => {
 
   it(`everyone can force finalize the contract after the deadline`, async () => {
     await contract.increaseTimeBy(autoApprovalTimeoutSec, {from: addr.anonymous})
+    const canForceFinalize = await contract.getCanForceFinalize()
+    const hasPendingItems = await contract.hasPendingItems()
+    const getCanForceFinalizeAt = await contract.getCanForceFinalizeAt()
     await contract.forceFinalize({from: addr.anonymous})
   })
 

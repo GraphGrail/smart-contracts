@@ -148,18 +148,23 @@ contract GGProject {
     return totalWorkItems - totalApprovedItems - totalPendingItems;
   }
 
-  function getCanFinalize() public view returns (bool) {
+  function hasPendingItems() public view returns (bool) {
     uint32 totalPendingItems;
     (, totalPendingItems) = _getPerformanceTotals();
-    return totalPendingItems == 0;
+    return totalPendingItems != 0;
+  }
+
+  function getCanFinalize() public view returns (bool) {
+    return !hasPendingItems();
   }
 
   function getCanForceFinalizeAt() public view returns (uint64) {
+    if (!hasPendingItems()) return 0;
     return lastClientActivity + autoApprovalTimeoutSec;
   }
 
   function getCanForceFinalize() public view returns (bool) {
-    return getTimestamp() >= getCanForceFinalizeAt();
+    return hasPendingItems() && getTimestamp() >= getCanForceFinalizeAt();
   }
 
   function getPerformance() external view returns (address[], uint256[], uint256[], uint256[]) {
@@ -216,6 +221,7 @@ contract GGProject {
     (totalApprovedItems, totalPendingItems) = _getPerformanceTotals();
 
     require(totalApprovedItems + totalPendingItems <= totalWorkItems);
+    lastClientActivity = getTimestamp();
     UpdatedPerformance();
   }
 

@@ -1,0 +1,12 @@
+#!/usr/bin/env node --trace-warnings
+
+global.Promise = require('./ethereum-bridge/server/node_modules/bluebird')
+
+Promise.config({
+  longStackTraces: process.env.NODE_ENV !== 'production'
+})
+
+const scriptPath = process.argv[process.argv.length - 1]
+
+require('babel-register')
+require('./' + scriptPath)

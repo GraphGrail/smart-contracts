@@ -1,0 +1,22 @@
+{
+  "name": "gg-smart-contracts-global-deps",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {},
+  "dependencies": {
+    "babel-core": "^6.26.0",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-register": "^6.26.0",
+    "bignumber.js": "git+https://github.com/frozeman/bignumber.js-nolookahead.git",
+    "ethereum-address": "0.0.4",
+    "truffle-contract": "^3.0.4",
+    "keccak": "^1.4.0",
+    "web3": "^0.20.6"
+  },
+  "devDependencies": {
+    "husky": "^0.14.3",
+    "prettier": "^1.11.1"
+  }
+}

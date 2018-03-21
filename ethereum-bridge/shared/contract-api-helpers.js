@@ -33,9 +33,9 @@ export function performanceToMap(performance) {
 
   for (let i = 0; i < len; ++i) {
     result[addresses[i]] = {
-      'totalItems': totals[i].toString(),
-      'approvedItems': approved[i].toString(),
-      'declinedItems': declined[i].toString(),
+      totalItems: +totals[i],
+      approvedItems: +approved[i],
+      declinedItems: +declined[i],
     }
   }
 
@@ -61,16 +61,16 @@ export function describeToMap(rawDescribe) {
     workItemsBalance, workItemsLeft, requiredInitialTokenBalance,
     canFinalize, canForceFinalize, canForceFinalizeAt] = rawDescribe
   return {
-    state,
-    totalWorkItems,
-    workItemPrice,
-    tokenBalance,
-    workItemsBalance,
-    workItemsLeft,
-    requiredInitialTokenBalance,
-    canFinalize,
-    canForceFinalize,
-    canForceFinalizeAt,
+    state: +state,
+    totalWorkItems: +totalWorkItems,
+    workItemPrice: workItemPrice,
+    tokenBalance: tokenBalance,
+    workItemsBalance: +workItemsBalance,
+    workItemsLeft: +workItemsLeft,
+    requiredInitialTokenBalance: requiredInitialTokenBalance,
+    canFinalize: canFinalize,
+    canForceFinalize: canForceFinalize,
+    canForceFinalizeAt: +canForceFinalizeAt,
   }
 }
 

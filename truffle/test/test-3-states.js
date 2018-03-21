@@ -20,7 +20,7 @@ import {
   performanceToMap,
   performanceToArrays,
   getContractStatus,
-} from './ggproject-utils'
+} from '../../ethereum-bridge/shared/contract-api-helpers'
 
 contract('GGProject: states checks', (accounts) => {
 

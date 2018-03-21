@@ -8,7 +8,7 @@ import {
   totalsToArrays,
   performanceToMap,
   performanceToArrays,
-} from './ggproject-utils'
+} from '../../ethereum-bridge/shared/contract-api-helpers'
 
 const {assert} = chai
 

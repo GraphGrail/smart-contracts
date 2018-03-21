@@ -1,35 +1,21 @@
 {
   "name": "gg-ethereum-bridge-server",
   "version": "1.0.0",
-  "main": "index.js",
+  "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "precommit": "npm run fix",
     "fix": "prettier --write --list-different 'src/**/*.js' || true"
   },
   "dependencies": {
-    "babel-core": "^6.26.0",
-    "babel-plugin-syntax-object-rest-spread": "^6.13.0",
-    "babel-plugin-transform-class-properties": "^6.24.1",
-    "babel-plugin-transform-object-rest-spread": "^6.26.0",
-    "babel-preset-env": "^1.6.1",
-    "babel-register": "^6.26.0",
-    "bignumber.js": "^6.0.0",
     "bluebird": "^3.5.1",
-    "ethereum-address": "0.0.4",
     "joi": "^13.1.2",
-    "keccak": "^1.4.0",
     "koa": "^2.5.0",
     "koa-body": "^2.5.0",
     "koa-cors": "0.0.16",
     "koa-router": "^7.4.0",
     "nanoid": "^1.0.2",
-    "needle": "^2.2.0",
-    "truffle-contract": "^3.0.4",
-    "web3": "^0.20.6"
+    "needle": "^2.2.0"
   },
-  "devDependencies": {
-    "husky": "^0.14.3",
-    "prettier": "^1.11.1"
-  }
+  "devDependencies": {}
 }

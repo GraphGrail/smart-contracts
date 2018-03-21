@@ -18,7 +18,7 @@ import {
   totalsToArrays,
   performanceToArrays,
   getContractStatus,
-} from './ggproject-utils'
+} from '../../ethereum-bridge/shared/contract-api-helpers'
 
 contract('GGProject: force finalization checks', (accounts) => {
 

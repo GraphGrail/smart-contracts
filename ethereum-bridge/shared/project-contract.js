@@ -4,6 +4,7 @@ import {
   State as State,
   getContractStatus,
   totalsToArrays,
+  performanceToArrays,
 } from './contract-api-helpers'
 
 import builtProjectContract from '../../truffle/build/contracts/GGProject.json'

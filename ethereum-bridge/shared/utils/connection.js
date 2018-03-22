@@ -27,5 +27,5 @@ async function makeConnectionPromise(web3Promise) {
   const blockGasLimit = latestBlock.gasLimit
 
   //we just use default account
-  return {web3, networkId, blockGasLimit, account: accounts && accounts[0]}
+  return {web3, networkId, blockGasLimit, accounts, account: accounts && accounts[0]}
 }

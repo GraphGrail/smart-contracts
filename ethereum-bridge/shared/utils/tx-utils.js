@@ -3,11 +3,14 @@ import BigNumber from 'bignumber.js'
 import {getConnection} from './connection'
 import {promisifyCall} from './promisify'
 
+import {UserError} from '../errors'
+import * as ErrorCodes from '../error-codes'
+
 
 export async function assertTxSucceeds(txResultPromise) {
   const txProps = await inspectTransaction(txResultPromise)
   if (!txProps.success) {
-    throw new Error(`transaction failed`)
+    throw new UserError(`transaction failed`, ErrorCodes.TRANSACTION_FAILED)
   }
   return txProps
 }

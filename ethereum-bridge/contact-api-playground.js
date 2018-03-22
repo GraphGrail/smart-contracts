@@ -28,12 +28,14 @@ setWeb3Promise(getWeb3())
 async function test() {
   const {account} = await getConnection()
 
+  const tokenDeployGas = await TokenContract.estimateDeployGas()
+  console.log(`Token deploy gas:`, tokenDeployGas)
+
   const token = await TokenContract.deployed()
   const balance = await token.balanceOf(account)
-
   console.log(`balance of ${account}: ${balance}`)
 
-  const project = await ProjectContract.deploy(
+  const deployArgs = [
     token.address,
     account,
     '0xc5fdf4076b8f3a5357c5e395ab970b5b54098fef',
@@ -43,7 +45,12 @@ async function test() {
     100,
     10,
     60,
-  )
+  ]
+
+  const projectDeployGas = await ProjectContract.estimateDeployGas(...deployArgs)
+  console.log(`Project deploy gas:`, projectDeployGas)
+
+  const project = await ProjectContract.deploy(...deployArgs)
 
   await token.transfer(project.address, 1000)
 

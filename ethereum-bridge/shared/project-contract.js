@@ -1,11 +1,11 @@
 import BaseContract from './base-contract'
 import {State as State, getContractStatus} from './contract-api-helpers'
 
-import projectContractABI from '../../truffle/build/contracts/GGProject.json'
+import builtProjectContract from '../../truffle/build/contracts/GGProject.json'
 
 
 export default class ProjectContract extends BaseContract {
-  static ABI = projectContractABI
+  static builtContract = builtProjectContract
 
   static State = State
 

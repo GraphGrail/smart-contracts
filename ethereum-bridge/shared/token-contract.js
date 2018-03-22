@@ -4,11 +4,11 @@ import {inspectTransaction} from './utils/tx-utils'
 import {UserError} from './errors'
 import * as ErrorCodes from './error-codes'
 
-import tokenContractABI from '../../truffle/build/contracts/GraphGrailToken.json'
+import builtTokenContract from '../../truffle/build/contracts/GraphGrailToken.json'
 
 
 export default class ProjectContract extends BaseContract {
-  static ABI = tokenContractABI
+  static builtContract = builtTokenContract
 
   async totalSupply() {
     return await this.truffleContract.totalSupply()

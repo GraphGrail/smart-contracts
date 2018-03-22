@@ -13,7 +13,7 @@ const GAS_HARD_LIMIT = 4700000
 
 export default class BaseContract {
 
-  static ABI = null
+  static builtContract = null
   static TruffleCls = null
   static connection = null
 
@@ -21,7 +21,7 @@ export default class BaseContract {
 
   static async _init() {
     this.connection = await getConnection()
-    this.TruffleCls = TruffleContract(this.ABI)
+    this.TruffleCls = TruffleContract(this.builtContract)
     this.TruffleCls.setProvider(this.connection.web3.currentProvider)
   }
 
@@ -51,7 +51,10 @@ export default class BaseContract {
 
   static async estimateDeployGas(...args) {
     await this._initialized()
-    const {web3} = this.connection
+    const {web3, account} = this.connection
+    const Web3Cls = web3.eth.contract(this.builtContract.abi)
+    const txData = Web3Cls.new.getData(...args, {data: this.builtContract.bytecode})
+    return await promisifyCall(web3.eth.estimateGas, web3.eth, [{from: account, data: txData}])
   }
 
   constructor(connection, truffleContract) {

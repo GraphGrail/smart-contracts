@@ -26,43 +26,75 @@ setWeb3Promise(getWeb3())
 
 
 async function test() {
-  const {account} = await getConnection()
+  const {account, accounts} = await getConnection()
+  console.log(`account:`, account)
 
-  const tokenDeployGas = await TokenContract.estimateDeployGas()
-  console.log(`Token deploy gas:`, tokenDeployGas)
+  info(`Deploying GraphGrailToken contract...`)
 
-  const token = await TokenContract.deployed()
+  const {address: tokenAddress} = await TokenContract.deploy()
+  console.log(`token address:`, tokenAddress)
+
+  const token = await TokenContract.at(tokenAddress)
   const balance = await token.balanceOf(account)
   console.log(`balance of ${account}: ${balance}`)
 
-  const deployArgs = [
-    token.address,
-    account,
-    '0xc5fdf4076b8f3a5357c5e395ab970b5b54098fef',
-    '0x821aea9a577a9b44299b9c15c88cf3087f3b5544',
-    100,
-    200,
-    100,
-    10,
-    60,
-  ]
+  info(`Deploying GGProject contract...`)
 
-  const projectDeployGas = await ProjectContract.estimateDeployGas(...deployArgs)
-  console.log(`Project deploy gas:`, projectDeployGas)
+  const project = await ProjectContract.deploy(
+    token.address, // tokenContractAddress
+    account, // clientAddress, equals ownerAddress here
+    accounts[8], // approvalCommissionBenificiaryAddress
+    accounts[9], // disapprovalCommissionBeneficiaryAddress
+    100, // approvalCommissionFractionThousands
+    200, // disapprovalCommissionFractionThousands
+    100, // totalWorkItems
+    10, // workItemPrice
+    60, // autoApprovalTimeoutSec
+  )
 
-  const project = await ProjectContract.deploy(...deployArgs)
+  console.log(`project address:`, project.address)
+  console.log(`project state:`, stringifyState(await project.describe()))
+
+  info(`Transferring tokens to project...`)
 
   await token.transfer(project.address, 1000)
+  console.log(`project state:`, stringifyState(await project.describe()))
 
-  const state1 = await project.describe()
-  console.log(`state1:`, state1)
+  info(`Activating project...`)
 
-  const data = await project.activate()
+  await project.activate()
+  console.log(`project state:`, stringifyState(await project.describe()))
 
-  const state2 = await project.describe()
-  console.log(`state2:`, state2)
+  info(`Updating totals...`)
+
+  await project.updateTotals({
+    '0x0f4f2ac550a1b4e2280d04c21cea7ebd822934b5': 1,
+    '0x6330a553fc93768f612722bb8c2ec78ac90b3bbc': 2,
+  })
+  console.log(`project state:`, stringifyState(await project.describe()))
+
+  info(`Updating performance...`)
+
+  await project.updatePerformance({
+    '0x0f4f2ac550a1b4e2280d04c21cea7ebd822934b5': {approvedItems: 1, declinedItems: 0},
+    '0x6330a553fc93768f612722bb8c2ec78ac90b3bbc': {approvedItems: 1, declinedItems: 1},
+  })
+  console.log(`project state:`, stringifyState(await project.describe()))
+
+  info(`Finalizing project...`)
+
+  await project.finalize()
+  console.log(`project state:`, stringifyState(await project.describe()))
 }
 
 
 test().catch(err => console.log(err.stack))
 
+
+function info(...args) {
+  console.log(`\n==>`, ...args, '\n')
+}
+
+function stringifyState(performanceMap) {
+  return JSON.stringify(performanceMap, null, '  ')
+}

@@ -24,7 +24,10 @@ async function makeConnectionPromise(web3Promise) {
     promisifyCall(web3.eth.getAccounts, web3.eth),
   ])
 
-  const blockGasLimit = latestBlock.gasLimit
+  let blockGasLimit = +latestBlock.gasLimit
+  if (!(blockGasLimit > 0)) {
+    blockGasLimit = 4712388
+  }
 
   //we just use default account
   return {web3, networkId, blockGasLimit, accounts, account: accounts && accounts[0]}

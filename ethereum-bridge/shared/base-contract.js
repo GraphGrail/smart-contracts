@@ -49,9 +49,17 @@ export default class BaseContract {
 
   static async deploy(...args) {
     await this._initialized()
-    const {web3, account} = this.connection
+    const {web3, account, blockGasLimit} = this.connection
 
     const gasEstimation = +await this.estimateDeployGas(...args)
+
+    if (gasEstimation > blockGasLimit) {
+      throw new UserError(
+        `transaction takes more gas than block limit of ${blockGasLimit}`,
+        ErrorCodes.TRANSACTION_FAILED
+      )
+    }
+
     const gasPrice = await getGasPrice()
     const txFee = new BigNumber(gasPrice).times(gasEstimation)
     const balance = await promisifyCall(web3.eth.getBalance, web3.eth, [account])
@@ -64,8 +72,8 @@ export default class BaseContract {
     }
 
     const truffleContract = await this.TruffleCls.new(...args, {
-      from: this.connection.account,
-      gas: Math.min(gasEstimation + 1000, GAS_HARD_LIMIT),
+      from: account,
+      gas: Math.min(gasEstimation + 20000, blockGasLimit),
       gasPrice,
     })
 
@@ -120,9 +128,9 @@ export default class BaseContract {
       throw new UserError(err.message, ErrorCodes.TRANSACTION_FAILED, err)
     }
 
-    if (gasEstimation > GAS_HARD_LIMIT) {
+    if (gasEstimation > this.connection.blockGasLimit) {
       throw new UserError(
-        `transaction takes more than ${GAS_HARD_LIMIT} gas`,
+        `transaction takes more gas than block limit of ${this.connection.blockGasLimit}`,
         ErrorCodes.TRANSACTION_FAILED
       )
     }
@@ -141,15 +149,23 @@ export default class BaseContract {
 
     const txOpts = {
       from: this.account,
-      gas: gasEstimation,
+      gas: Math.min(gasEstimation + 20000, this.connection.blockGasLimit),
       gasPrice: gasPrice,
       value: value,
     }
 
     const txArgs = args ? [...args, txOpts] : [txOpts]
+    let txResult
 
-    // TODO: throw UserError
-    const txResult = await this.truffleContract[methodName].apply(this.truffleContract, txArgs)
+    try {
+      txResult = await this.truffleContract[methodName].apply(this.truffleContract, txArgs)
+    } catch (err) {
+      if (err.message.search('revert') >= 0) {
+        throw new UserError(err.message, ErrorCodes.TRANSACTION_FAILED, err)
+      } else {
+        throw err
+      }
+    }
 
     return await assertTxSucceeds(txResult)
   }

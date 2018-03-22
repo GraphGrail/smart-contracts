@@ -12,6 +12,8 @@ import * as ErrorCodes from './error-codes'
 
 // Fail if tx is going to take more gas than this.
 //
+// TODO: get from connection
+//
 const GAS_HARD_LIMIT = 4700000
 
 
@@ -31,6 +33,12 @@ export default class BaseContract {
 
   static _initialized() {
     return this._initPromise || (this._initPromise = this._init())
+  }
+
+  static async at(address) {
+    await this._initialized()
+    const truffleContract =  await this.TruffleCls.at(address)
+    return new this(this.connection, truffleContract)
   }
 
   static async deployed() {
@@ -139,6 +147,8 @@ export default class BaseContract {
     }
 
     const txArgs = args ? [...args, txOpts] : [txOpts]
+
+    // TODO: throw UserError
     const txResult = await this.truffleContract[methodName].apply(this.truffleContract, txArgs)
 
     return await assertTxSucceeds(txResult)

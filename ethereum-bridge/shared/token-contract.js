@@ -19,6 +19,8 @@ export default class ProjectContract extends BaseContract {
   }
 
   async transfer(to, value) {
+    // TODO: check basic preconditions
+
     const result = await this._callContractMethod('transfer', [to, value])
 
     const transferEmitted = result.events.some(evt => evt.name === 'Transfer')

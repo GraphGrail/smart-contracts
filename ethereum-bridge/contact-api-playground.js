@@ -54,12 +54,12 @@ async function test() {
 
   await token.transfer(project.address, 1000)
 
-  const state1 = await project.getState()
+  const state1 = await project.describe()
   console.log(`state1:`, state1)
 
   const data = await project.activate()
 
-  const state2 = await project.getState()
+  const state2 = await project.describe()
   console.log(`state2:`, state2)
 }
 

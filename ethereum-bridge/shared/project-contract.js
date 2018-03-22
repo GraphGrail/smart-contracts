@@ -1,5 +1,10 @@
 import BaseContract from './base-contract'
-import {State as State, getContractStatus} from './contract-api-helpers'
+
+import {
+  State as State,
+  getContractStatus,
+  totalsToArrays,
+} from './contract-api-helpers'
 
 import builtProjectContract from '../../truffle/build/contracts/GGProject.json'
 
@@ -37,12 +42,39 @@ export default class ProjectContract extends BaseContract {
     super(connection, truffleContract)
   }
 
-  async getState() {
+  async describe() {
     return await getContractStatus(this.truffleContract)
   }
 
   async activate() {
+    // TODO: check basic pre-conditions
     return this._callContractMethod('activate')
+  }
+
+  async updateTotals(totalsMap) {
+    // TODO: check basic pre-conditions
+    const {addresses, totals} = totalsToArrays(totalsMap)
+    return this._callContractMethod('updateTotals', [addresses, totals], {from: this.account})
+  }
+
+  async updatePerformance(performanceMap) {
+    // TODO: check basic pre-conditions
+    const {addresses, approved, declined} = performanceToArrays(performanceMap)
+    return this._callContractMethod(
+      'updatePerformance',
+      [addresses, approved, declined],
+      {from: this.account}
+    )
+  }
+
+  async finalize() {
+    // TODO: check basic pre-conditions
+    return this._callContractMethod('finalize')
+  }
+
+  async forceFinalize() {
+    // TODO: check basic pre-conditions
+    return this._callContractMethod('forceFinalize')
   }
 
 }

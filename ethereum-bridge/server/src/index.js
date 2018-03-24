@@ -6,6 +6,8 @@ import Joi from 'joi'
 import Web3 from 'web3'
 
 import notifyWhenCompleted from './utils/notify-when-completed'
+
+import {UserError} from '../../shared/errors'
 import * as ErrorCodes from '../../shared/error-codes'
 
 import {setWeb3Promise, getConnection} from '../../shared/utils/connection'
@@ -119,7 +121,7 @@ router.post('/api/deploy-contract', koaBody, ctx => {
 })
 
 // POST update-completed-work
-router.post('/api/update-completed-work', koaBody, ctx => {
+router.post('/api/update-completed-work', koaBody, async ctx => {
   console.log('[/api/update-completed-work]', ctx.request.body)
 
   const schema = Joi.object().keys({
@@ -136,13 +138,22 @@ router.post('/api/update-completed-work', koaBody, ctx => {
 
   const {callback, contractAddress, payload} = ctx.request.body
 
-  // const promise = mock
-  //   .updateCompletedWork(contractAddress, payload)
-  //   .then(contractAddress => ({contractAddress}))
+  async function run() {
+    let contract
+    try {
+      contract = await ProjectContract.at(contractAddress)
+    } catch (err) {
+      if (/no code at address/.test(err.message)) {
+        throw new UserError(err.message, ErrorCodes.CONTRACT_NOT_FOUND)
+      } else {
+        throw err
+      }
+    }
+    await contract.updateTotals(payload)
+    return {success: true, error: null}
+  }
 
-  const promise = TODO_IMPLEMENT
-
-  const taskId = notifyWhenCompleted(callback, promise)
+  const taskId = notifyWhenCompleted(callback, run())
   ctx.body = {taskId}
 })
 
@@ -155,14 +166,14 @@ router.get('/api/contract-status/:address', async ctx => {
     ctx.throw(400, JSON.stringify({error: 'address is invalid'}))
   }
   try {
-    ctx.body = await TODO_IMPLEMENT
-    // ctx.body = await mock.getContractState(address)
+    const contract = await ProjectContract.at(address)
+    ctx.body = await contract.describe()
   } catch (err) {
-    console.log(err.message, err.code)
-    if (err.code === ErrorCodes.CONTRACT_NOT_FOUND) {
+    if (/no code at address/.test(err.message)) {
       ctx.throw(404, JSON.stringify({error: err.message}))
+    } else {
+      ctx.throw(400, JSON.stringify({error: err.message}))
     }
-    throw err
   }
 })
 

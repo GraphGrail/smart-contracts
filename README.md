@@ -47,5 +47,5 @@ This will set up local testing Ethereum network and populate it with seed accoun
 
 ```
 cd ./truffle
-npm test-local
+npm run test-local
 ```

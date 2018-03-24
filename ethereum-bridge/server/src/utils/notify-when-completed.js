@@ -15,8 +15,9 @@ export default function notifyWhenCompleted(httpCallback, promise) {
       payload: result,
     })
 
-  const onError = err =>
-    postToCallback(httpCallback, {
+  const onError = err => {
+    console.log(err.stack)
+    return postToCallback(httpCallback, {
       taskId: taskId,
       success: false,
       error: {
@@ -25,8 +26,9 @@ export default function notifyWhenCompleted(httpCallback, promise) {
       },
       payload: null,
     })
+  }
 
-  promise.then(onSuccess, onError).catch(err => {
+  promise.then(onSuccess).catch(onError).catch(err => {
     console.error(`Failed to POST to callback ${httpCallback}: ${err.stack}`)
   })
 

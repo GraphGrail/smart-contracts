@@ -1,3 +1,4 @@
+import BigNumber from 'bignumber.js'
 import Koa from 'koa'
 import KoaBody from 'koa-body'
 import KoaRouter from 'koa-router'
@@ -11,6 +12,7 @@ import {UserError} from '../../shared/errors'
 import * as ErrorCodes from '../../shared/error-codes'
 
 import {setWeb3Promise, getConnection} from '../../shared/utils/connection'
+import {promisifyCall} from '../../shared/utils/promisify'
 
 import TokenContract from '../../shared/token-contract'
 import ProjectContract from '../../shared/project-contract'
@@ -194,10 +196,22 @@ router.post('/api/force-finalize', koaBody, ctx => {
 
   const {callback, contractAddress} = ctx.request.body
 
-  // const promise = mock.forceFinalizeContract(contractAddress)
-  const promise = TODO_IMPLEMENT
+  async function run() {
+    let contract
+    try {
+      contract = await ProjectContract.at(contractAddress)
+    } catch (err) {
+      if (/no code at address/.test(err.message)) {
+        throw new UserError(err.message, ErrorCodes.CONTRACT_NOT_FOUND)
+      } else {
+        throw err
+      }
+    }
+    await contract.forceFinalize()
+    return {success: true, error: null}
+  }
 
-  const taskId = notifyWhenCompleted(callback, promise)
+  const taskId = notifyWhenCompleted(callback, run())
   ctx.body = {taskId}
 })
 
@@ -226,46 +240,80 @@ router.post('/api/credit-account', koaBody, ctx => {
     payload: {tokenContractAddress, recepientAddress, tokenValue, etherValue},
   } = ctx.request.body
 
-  // const promise = mock.creditAccount(tokenContractAddress, recepientAddress, tokenValue, etherValue)
-  const promise = TODO_IMPLEMENT
+  async function run() {
+    let token
+    try {
+      token = await TokenContract.at(tokenContractAddress)
+    } catch (err) {
+      if (/no code at address/.test(err.message)) {
+        throw new UserError(err.message, ErrorCodes.CONTRACT_NOT_FOUND)
+      } else {
+        throw err
+      }
+    }
 
-  const taskId = notifyWhenCompleted(callback, promise)
+    await token.transfer(recepientAddress, tokenValue)
+
+    const {web3, account} = await getConnection()
+
+    const balance = await promisifyCall(web3.eth.getBalance, web3.eth, [account])
+    if (new BigNumber('' + balance).lt(etherValue)) {
+      throw new UserError(`balance of address ${account} is insufficient to deploy this contract`, 
+        ErrorCodes.INSUFFICIENT_ETHER_BALANCE)
+    }
+
+    const etherSentPromise = promisifyCall(web3.eth.sendTransaction, web3.eth, [{
+      from: account,
+      to: recepientAddress,
+      value: etherValue,
+    }])
+
+    try {
+      await etherSentPromise
+    } catch (err) {
+      throw new UserError(err.message, ErrorCodes.TRANSACTION_FAILED)
+    }
+
+    return {success: true, error: null}
+  }
+
+  const taskId = notifyWhenCompleted(callback, run())
   ctx.body = {taskId}
 })
 
-// Internal API
+// Internal API - no internal API
 
-// POST _transferTokens
-router.post('/api/_transferTokens', koaBody, async ctx => {
-  console.log('[/api/_transferTokens]', ctx.request.body)
+// // POST _transferTokens
+// router.post('/api/_transferTokens', koaBody, async ctx => {
+//   console.log('[/api/_transferTokens]', ctx.request.body)
 
-  const schema = Joi.object().keys({
-    from: JOI_ETH_ADDRESS,
-    to: JOI_ETH_ADDRESS,
-    amount: JOI_BIG_NUMBER,
-  })
+//   const schema = Joi.object().keys({
+//     from: JOI_ETH_ADDRESS,
+//     to: JOI_ETH_ADDRESS,
+//     amount: JOI_BIG_NUMBER,
+//   })
 
-  const {error, value} = Joi.validate(ctx.request.body, schema)
+//   const {error, value} = Joi.validate(ctx.request.body, schema)
 
-  if (error !== null) {
-    ctx.throw(400, JSON.stringify({error: error.details[0].message}))
-  }
+//   if (error !== null) {
+//     ctx.throw(400, JSON.stringify({error: error.details[0].message}))
+//   }
 
-  const {from, to, amount} = ctx.request.body
+//   const {from, to, amount} = ctx.request.body
 
-  try {
-    // await mock.transferTokens(from, to, amount)
-    await TODO_IMPLEMENT
-  } catch (err) {
-    console.log(err.message, err.code)
-    if (err.code === ErrorCodes.INSUFFICIENT_ETHER_BALANCE) {
-      ctx.throw(400, JSON.stringify({error: err.message}))
-    }
-    throw err
-  }
+//   try {
+//     // await mock.transferTokens(from, to, amount)
+//     await TODO_IMPLEMENT
+//   } catch (err) {
+//     console.log(err.message, err.code)
+//     if (err.code === ErrorCodes.INSUFFICIENT_ETHER_BALANCE) {
+//       ctx.throw(400, JSON.stringify({error: err.message}))
+//     }
+//     throw err
+//   }
 
-  ctx.body = {status: 'ok'}
-})
+//   ctx.body = {status: 'ok'}
+// })
 
 router.post('/api/_test-callback', koaBody, ctx => {
   console.log('POST /api/_test-callback:', ctx.request.body)

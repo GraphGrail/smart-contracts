@@ -37,13 +37,13 @@ export default class BaseContract {
 
   static async at(address) {
     await this._initialized()
-    const truffleContract =  await this.TruffleCls.at(address)
+    const truffleContract =  await this.TruffleCls.at(address).then(x => x)
     return new this(this.connection, truffleContract)
   }
 
   static async deployed() {
     await this._initialized()
-    const truffleContract =  await this.TruffleCls.deployed()
+    const truffleContract =  await this.TruffleCls.deployed().then(x => x)
     return new this(this.connection, truffleContract)
   }
 
@@ -75,7 +75,7 @@ export default class BaseContract {
       from: account,
       gas: Math.min(gasEstimation + 20000, blockGasLimit),
       gasPrice,
-    })
+    }).then(x => x)
 
     return new this(this.connection, truffleContract)
   }

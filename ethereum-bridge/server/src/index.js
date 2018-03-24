@@ -54,18 +54,25 @@ router.get('/api/wallet-address', async ctx => {
   ctx.body = {address}
 })
 
-// GET check-balances/:address
+// GET check-balances/:address?tokenAddress=0x436e362ac2c1d5f88986b7553395746446922be2
 router.get('/api/check-balances/:address', async ctx => {
-  console.log('[/api/checkBalances]', ctx.params)
+  console.log('[/api/checkBalances]', ctx.params, ctx.request.query)
 
   const address = ctx.params['address']
   if (!address.match(ETH_ADDRESS_REGEX)) {
     ctx.throw(400, JSON.stringify({error: 'address is invalid'}))
   }
 
-  // const result = await mock.getBalance(address)
-  const result = await TODO_IMPLEMENT
-  ctx.body = result
+  const tokenAddress = ctx.request.query['tokenAddress']
+  if (!tokenAddress.match(ETH_ADDRESS_REGEX)) {
+    ctx.throw(400, JSON.stringify({error: 'token address is invalid'}))
+  }
+
+  const token = await TokenContract.at(tokenAddress)
+  const result = await token.balanceOf(address)
+  const {web3} = await getConnection()
+  const ethBalance = await web3.eth.getBalance(address)
+  ctx.body = {token: result, ether: ethBalance}
 })
 
 // POST deploy-contract

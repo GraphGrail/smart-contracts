@@ -3,9 +3,15 @@ import KoaBody from 'koa-body'
 import KoaRouter from 'koa-router'
 import cors from 'koa-cors'
 import Joi from 'joi'
+import Web3 from 'web3'
 
 import notifyWhenCompleted from './utils/notify-when-completed'
 import * as ErrorCodes from '../../shared/error-codes'
+
+import {setWeb3Promise, getConnection} from '../../shared/utils/connection'
+
+import TokenContract from '../../shared/token-contract'
+import ProjectContract from '../../shared/project-contract'
 
 const PORT = 3000
 
@@ -16,21 +22,12 @@ const koaBody = KoaBody()
 const TODO_IMPLEMENT = new Promise(resolve => resolve({TODO: 'implement'}))
 // const mock = new Mock()
 
-router.post('/api/ping', koaBody, ctx => {
-  console.log('[/api/ping]', ctx.request.body)
+async function getWeb3() {
+  const provider = new Web3.providers.HttpProvider('http://127.0.0.1:9545')
+  return new Web3(provider)
+}
 
-  const schema = Joi.object().keys({
-    ping: Joi.string().required(),
-  })
-
-  const {error, value} = Joi.validate(ctx.request.body, schema)
-
-  if (error !== null) {
-    ctx.throw(400, error.details[0].message)
-  } else {
-    ctx.body = JSON.stringify(ctx.request.body)
-  }
-})
+setWeb3Promise(getWeb3())
 
 // Consts
 const ETH_ADDRESS_REGEX = /^0x([a-fA-F0-9]{40})$/
@@ -52,8 +49,7 @@ const JOI_STATUS_MAP = Joi.object().pattern(ETH_ADDRESS_REGEX, Joi.number().requ
 router.get('/api/wallet-address', async ctx => {
   console.log('[/api/wallet-address]')
 
-  // const address = await mock.getWalletAddress()
-  const address = await TODO_IMPLEMENT
+  const {account: address} = await getConnection()
 
   ctx.body = {address}
 })

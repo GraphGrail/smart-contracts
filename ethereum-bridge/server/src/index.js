@@ -102,10 +102,19 @@ router.post('/api/deploy-contract', koaBody, ctx => {
 
   const {callback, payload} = ctx.request.body
 
-  // const promise = mock.deployContract(payload).then(contractAddress => ({contractAddress}))
-  const promise = TODO_IMPLEMENT
+  const project = ProjectContract.deploy(
+    payload.tokenContractAddress, // tokenContractAddress
+    payload.clientAddress, // clientAddress, equals ownerAddress here
+    payload.approvalCommissionBenificiaryAddress, // approvalCommissionBenificiaryAddress
+    payload.disapprovalCommissionBeneficiaryAddress, // disapprovalCommissionBeneficiaryAddress
+    payload.approvalCommissionFractionThousands, // approvalCommissionFractionThousands
+    payload.disapprovalCommissionFractionThousands, // disapprovalCommissionFractionThousands
+    payload.totalWorkItems, // totalWorkItems
+    payload.workItemPrice, // workItemPrice
+    payload.autoApprovalTimeoutSec // autoApprovalTimeoutSec
+  ).then(contract => ({contractAddress: contract.address}))
 
-  const taskId = notifyWhenCompleted(callback, promise)
+  const taskId = notifyWhenCompleted(callback, project)
   ctx.body = {taskId}
 })
 

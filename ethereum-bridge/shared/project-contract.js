@@ -1,7 +1,10 @@
 import BaseContract from './base-contract'
+import {UserError} from './errors'
+import * as ErrorCodes from './error-codes'
 
 import {
   State as State,
+  stateToString,
   getContractStatus,
   totalsToArrays,
   performanceToArrays,
@@ -48,7 +51,29 @@ export default class ProjectContract extends BaseContract {
   }
 
   async activate() {
-    // TODO: check basic pre-conditions
+    const {tokenBalance, totalWorkItems, workItemPrice, state, client} = await this.describe()
+
+    if (tokenBalance < totalWorkItems * workItemPrice) {
+      throw new UserError(
+        `Contract needs ${totalWorkItems * workItemPrice} tokens to be activated, but has only ${tokenBalance}`,
+        ErrorCodes.INSUFFICIENT_TOKEN_BALANCE
+      )
+    }
+
+    if (state !== State.New) {
+      throw new UserError(
+        `Contract should be in New state to be activated, but is in ${stateToString(state)}`,
+        ErrorCodes.INVALID_CONTRACT_STATE
+      )
+    }
+
+    if (client !== this.account) {
+      throw new UserError(
+        `Only authorized address for contract is ${client}, but you're running as ${this.account} now`,
+        ErrorCodes.UNAUTHORIZED
+      )
+    }
+
     return this._callContractMethod('activate')
   }
 

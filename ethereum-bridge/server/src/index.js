@@ -426,3 +426,29 @@ app.listen(PORT)
 
 console.log(`Listening on ${PORT}`)
 console.log(`RPC connection is ${RPC_CONNECTION}`)
+
+async function checksOnStartup() {
+  async function isAccountLocked(address, web3) {
+    try {
+      await promisifyCall(web3.eth.sign, web3.eth, [address, ''])
+    } catch (e) {
+      console.log(e.stack)
+      return true
+    }
+    return false
+  }
+
+  const {web3, account} = await getConnection()
+  if (account) {
+    if (await isAccountLocked(account, web3)) {
+      console.log(`Account is locked. Aborting...`)
+      process.exit(1)
+    }
+  } else {
+    console.log(`Account is undefined. Aborting...`)
+    process.exit(1)
+  }
+}
+
+checksOnStartup()
+

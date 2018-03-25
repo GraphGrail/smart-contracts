@@ -412,10 +412,10 @@ router.post('/api/credit-account', koaBody, ctx => {
 // })
 
 
-router.post('/api/_test-callback', koaBody, ctx => {
-  console.log('POST /api/_test-callback:', ctx.request.body)
-  ctx.body = {ok: true}
-})
+// router.post('/api/_test-callback', koaBody, ctx => {
+//   console.log('POST /api/_test-callback:', ctx.request.body)
+//   ctx.body = {ok: true}
+// })
 
 app.use(cors())
 app.use(router.routes())

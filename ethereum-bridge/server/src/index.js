@@ -7,6 +7,7 @@ import Joi from 'joi'
 import Web3 from 'web3'
 
 import notifyWhenCompleted from './utils/notify-when-completed'
+import config from './config'
 
 import {UserError} from '../../shared/errors'
 import * as ErrorCodes from '../../shared/error-codes'
@@ -25,7 +26,7 @@ const router = KoaRouter()
 const koaBody = KoaBody()
 
 async function getWeb3() {
-  const provider = new Web3.providers.HttpProvider(RPC_CONNECTION)
+  const provider = new Web3.providers.HttpProvider(config.rpcConnection)
   return new Web3(provider)
 }
 
@@ -180,7 +181,7 @@ router.get('/api/contract-status/:address', async ctx => {
     ctx.body = await contract.describe().then(r => {
       const {state, performance, ...other} = r
       return {
-        "state": stateToString(state), 
+        "state": stateToString(state),
         "workers": performance,
         ...other,
       }
@@ -273,7 +274,7 @@ router.post('/api/credit-account', koaBody, ctx => {
 
     const balance = await promisifyCall(web3.eth.getBalance, web3.eth, [account])
     if (new BigNumber('' + balance).lt(etherValue)) {
-      throw new UserError(`balance of address ${account} is insufficient to deploy this contract`, 
+      throw new UserError(`balance of address ${account} is insufficient to deploy this contract`,
         ErrorCodes.INSUFFICIENT_ETHER_BALANCE)
     }
 
@@ -298,7 +299,7 @@ router.post('/api/credit-account', koaBody, ctx => {
 
 // Internal API - FOR TESTING purposes only
 
-if (process.env.GG_SERVER_TEST_RUN === "1") {
+if (config.isTestRun) {
 
   const JOI_WORK_MAP = Joi.object().pattern(ETH_ADDRESS_REGEX, {
     approvedItems: Joi.number().required(),
@@ -423,10 +424,7 @@ if (process.env.GG_SERVER_TEST_RUN === "1") {
 
 app.use(cors())
 app.use(router.routes())
-app.listen(PORT)
-
-console.log(`Listening on ${PORT}`)
-console.log(`RPC connection is ${RPC_CONNECTION}`)
+app.listen(config.port)
 
 async function checksOnStartup() {
   async function isAccountLocked(address, web3) {

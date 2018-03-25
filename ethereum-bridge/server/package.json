@@ -8,11 +8,11 @@
     "fix": "prettier --write --list-different 'src/**/*.js' || true"
   },
   "dependencies": {
+    "@koa/cors": "^2.2.1",
     "bluebird": "^3.5.1",
     "joi": "^13.1.2",
     "koa": "^2.5.0",
     "koa-body": "^2.5.0",
-    "koa-cors": "0.0.16",
     "koa-router": "^7.4.0",
     "nanoid": "^1.0.2",
     "needle": "^2.2.0"

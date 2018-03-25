@@ -2,7 +2,7 @@ import BigNumber from 'bignumber.js'
 import Koa from 'koa'
 import KoaBody from 'koa-body'
 import KoaRouter from 'koa-router'
-import cors from 'koa-cors'
+import cors from '@koa/cors'
 import Joi from 'joi'
 import Web3 from 'web3'
 

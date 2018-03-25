@@ -24,9 +24,6 @@ const app = new Koa()
 const router = KoaRouter()
 const koaBody = KoaBody()
 
-const TODO_IMPLEMENT = new Promise(resolve => resolve({TODO: 'implement'}))
-// const mock = new Mock()
-
 async function getWeb3() {
   const provider = new Web3.providers.HttpProvider(RPC_CONNECTION)
   return new Web3(provider)

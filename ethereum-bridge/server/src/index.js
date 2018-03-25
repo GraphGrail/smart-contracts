@@ -167,9 +167,25 @@ router.get('/api/contract-status/:address', async ctx => {
   if (!address.match(ETH_ADDRESS_REGEX)) {
     ctx.throw(400, JSON.stringify({error: 'address is invalid'}))
   }
+  function stateToString(state) {
+    switch(state) {
+      case 0: return "NEW"
+      case 1: return "ACTIVE"
+      case 2: return "FINALIZED"
+      default: return state
+    }
+  }
+
   try {
     const contract = await ProjectContract.at(address)
-    ctx.body = await contract.describe()
+    ctx.body = await contract.describe().then(r => {
+      const {state, performance, ...other} = r
+      return {
+        "state": stateToString(state), 
+        "workers": performance,
+        ...other,
+      }
+    })
   } catch (err) {
     if (/no code at address/.test(err.message)) {
       ctx.throw(404, JSON.stringify({error: err.message}))

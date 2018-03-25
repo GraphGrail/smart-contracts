@@ -45,10 +45,6 @@ const JOI_BIG_NUMBER = Joi.string()
   .required()
 
 const JOI_STATUS_MAP = Joi.object().pattern(ETH_ADDRESS_REGEX, Joi.number().required())
-// const JOI_WORK_MAP = Joi.object().pattern(ETH_ADDRESS_REGEX, {
-//   approvedItems: Joi.number().required(),
-//   declinedItems: Joi.number().required(),
-// })
 
 // Public API
 // GET wallet-address
@@ -299,120 +295,130 @@ router.post('/api/credit-account', koaBody, ctx => {
   ctx.body = {taskId}
 })
 
-// Internal API - no internal API
+// Internal API - FOR TESTING purposes only
 
-// // POST _activateContract
-// router.post('/api/_activateContract', koaBody, async ctx => {
-//   console.log('[/api/_activateContract]', ctx.request.body)
+if (process.env.GG_SERVER_TEST_RUN === "1") {
 
-//   const schema = Joi.object().keys({
-//     actorAddress: JOI_ETH_ADDRESS,
-//     contractAddress: JOI_ETH_ADDRESS,
-//   })
+  const JOI_WORK_MAP = Joi.object().pattern(ETH_ADDRESS_REGEX, {
+    approvedItems: Joi.number().required(),
+    declinedItems: Joi.number().required(),
+  })
 
-//   const {error, value} = Joi.validate(ctx.request.body, schema)
+  // POST _activateContract
+  router.post('/api/_activateContract', koaBody, async ctx => {
+    console.log('[/api/_activateContract]', ctx.request.body)
 
-//   if (error !== null) {
-//     ctx.throw(400, JSON.stringify({error: error.details[0].message}))
-//   }
+    const schema = Joi.object().keys({
+      actorAddress: JOI_ETH_ADDRESS,
+      contractAddress: JOI_ETH_ADDRESS,
+    })
 
-//   const {actorAddress, contractAddress} = ctx.request.body
+    const {error, value} = Joi.validate(ctx.request.body, schema)
 
-//   let contract
-//   try {
-//     let token = await TokenContract.at("0x436e362ac2c1d5f88986b7553395746446922be2")
-//     await token.transfer(contractAddress, 1000)
-//     contract = await ProjectContract.at(contractAddress)
-//     await contract.activate()
-//   } catch (err) {
-//     console.log(err.message, err.code)
-//     if (err.code === ErrorCodes.INSUFFICIENT_ETHER_BALANCE) {
-//       ctx.throw(400, JSON.stringify({error: err.message}))
-//     }
-//     if (err.code === ErrorCodes.INSUFFICIENT_TOKEN_BALANCE) {
-//       ctx.throw(400, JSON.stringify({error: err.message}))
-//     }
-//     if (err.code === ErrorCodes.CONTRACT_NOT_FOUND) {
-//       ctx.throw(400, JSON.stringify({error: err.message}))
-//     }
-//     throw err
-//   }
+    if (error !== null) {
+      ctx.throw(400, JSON.stringify({error: error.details[0].message}))
+    }
 
-//   ctx.body = {status: 'ok'}
-// })
+    const {actorAddress, contractAddress} = ctx.request.body
 
-// // POST _scoreWork
-// router.post('/api/_scoreWork', koaBody, async ctx => {
-//   console.log('[/api/_scoreWork]', ctx.request.body)
+    let contract
+    try {
+      let token = await TokenContract.at("0x436e362ac2c1d5f88986b7553395746446922be2")
+      await token.transfer(contractAddress, 1000)
+      contract = await ProjectContract.at(contractAddress)
+      await contract.activate()
+    } catch (err) {
+      console.log(err.message, err.code)
+      if (err.code === ErrorCodes.INSUFFICIENT_ETHER_BALANCE) {
+        ctx.throw(400, JSON.stringify({error: err.message}))
+      }
+      if (err.code === ErrorCodes.INSUFFICIENT_TOKEN_BALANCE) {
+        ctx.throw(400, JSON.stringify({error: err.message}))
+      }
+      if (err.code === ErrorCodes.CONTRACT_NOT_FOUND) {
+        ctx.throw(400, JSON.stringify({error: err.message}))
+      }
+      throw err
+    }
 
-//   const schema = Joi.object().keys({
-//     actorAddress: JOI_ETH_ADDRESS,
-//     contractAddress: JOI_ETH_ADDRESS,
-//     workers: JOI_WORK_MAP,
-//   })
+    ctx.body = {status: 'ok'}
+  })
 
-//   const {error, value} = Joi.validate(ctx.request.body, schema)
+  // POST _scoreWork
+  router.post('/api/_scoreWork', koaBody, async ctx => {
+    console.log('[/api/_scoreWork]', ctx.request.body)
 
-//   if (error !== null) {
-//     ctx.throw(400, JSON.stringify({error: error.details[0].message}))
-//   }
+    const schema = Joi.object().keys({
+      actorAddress: JOI_ETH_ADDRESS,
+      contractAddress: JOI_ETH_ADDRESS,
+      workers: JOI_WORK_MAP,
+    })
 
-//   const {actorAddress, contractAddress, workers} = ctx.request.body
+    const {error, value} = Joi.validate(ctx.request.body, schema)
 
-//   try {
-//     const contract = await ProjectContract.at(contractAddress)
-//     await contract.updatePerformance(workers)
-//   } catch (err) {
-//     console.log(err.message, err.code)
-//     if (err.code === ErrorCodes.INSUFFICIENT_ETHER_BALANCE) {
-//       ctx.throw(400, JSON.stringify({error: err.message}))
-//     }
-//     if (err.code === ErrorCodes.CONTRACT_NOT_FOUND) {
-//       ctx.throw(400, JSON.stringify({error: err.message}))
-//     }
-//     throw err
-//   }
+    if (error !== null) {
+      ctx.throw(400, JSON.stringify({error: error.details[0].message}))
+    }
 
-//   ctx.body = {status: 'ok'}
-// })
+    const {actorAddress, contractAddress, workers} = ctx.request.body
 
-// router.post('/api/_finalizeContract', koaBody, async ctx => {
-//   console.log('[/api/_finalizeContract]', ctx.request.body)
+    try {
+      const contract = await ProjectContract.at(contractAddress)
+      await contract.updatePerformance(workers)
+    } catch (err) {
+      console.log(err.message, err.code)
+      if (err.code === ErrorCodes.INSUFFICIENT_ETHER_BALANCE) {
+        ctx.throw(400, JSON.stringify({error: err.message}))
+      }
+      if (err.code === ErrorCodes.CONTRACT_NOT_FOUND) {
+        ctx.throw(400, JSON.stringify({error: err.message}))
+      }
+      throw err
+    }
 
-//   const schema = Joi.object().keys({
-//     actorAddress: JOI_ETH_ADDRESS,
-//     contractAddress: JOI_ETH_ADDRESS,
-//   })
+    ctx.body = {status: 'ok'}
+  })
 
-//   const {error, value} = Joi.validate(ctx.request.body, schema)
+  router.post('/api/_finalizeContract', koaBody, async ctx => {
+    console.log('[/api/_finalizeContract]', ctx.request.body)
 
-//   if (error !== null) {
-//     ctx.throw(400, JSON.stringify({error: error.details[0].message}))
-//   }
-//   const {actorAddress, contractAddress} = ctx.request.body
+    const schema = Joi.object().keys({
+      actorAddress: JOI_ETH_ADDRESS,
+      contractAddress: JOI_ETH_ADDRESS,
+    })
 
-//   try {
-//     const contract = await ProjectContract.at(contractAddress)
-//     await contract.finalize()
-//   } catch (err) {
-//     console.log(err.message, err.code)
-//     if (err.code === ErrorCodes.INSUFFICIENT_ETHER_BALANCE) {
-//       ctx.throw(400, JSON.stringify({error: err.message}))
-//     }
-//     if (err.code === ErrorCodes.CONTRACT_NOT_FOUND) {
-//       ctx.throw(400, JSON.stringify({error: err.message}))
-//     }
-//     throw err
-//   }
+    const {error, value} = Joi.validate(ctx.request.body, schema)
 
-//   ctx.body = {status: 'ok'}
-// })
+    if (error !== null) {
+      ctx.throw(400, JSON.stringify({error: error.details[0].message}))
+    }
+    const {actorAddress, contractAddress} = ctx.request.body
+
+    try {
+      const contract = await ProjectContract.at(contractAddress)
+      await contract.finalize()
+    } catch (err) {
+      console.log(err.message, err.code)
+      if (err.code === ErrorCodes.INSUFFICIENT_ETHER_BALANCE) {
+        ctx.throw(400, JSON.stringify({error: err.message}))
+      }
+      if (err.code === ErrorCodes.CONTRACT_NOT_FOUND) {
+        ctx.throw(400, JSON.stringify({error: err.message}))
+      }
+      throw err
+    }
+
+    ctx.body = {status: 'ok'}
+  })
 
 
-// router.post('/api/_test-callback', koaBody, ctx => {
-//   console.log('POST /api/_test-callback:', ctx.request.body)
-//   ctx.body = {ok: true}
-// })
+  router.post('/api/_test-callback', koaBody, ctx => {
+    console.log('POST /api/_test-callback:', ctx.request.body)
+    ctx.body = {ok: true}
+  })
+
+  console.log(`GG_SERVER_TEST_RUN is enabled`)
+}
 
 app.use(cors())
 app.use(router.routes())

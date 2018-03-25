@@ -75,9 +75,11 @@ export function describeToMap(rawDescribe) {
 }
 
 export async function getContractStatus(contract) {
-  const [rawDescribe, rawPerformance] = await Promise.all([contract.describe(), contract.getPerformance()])
+  const [rawDescribe, rawPerformance, client] = await Promise.all([
+    contract.describe(), contract.getPerformance(), contract.client()])
   return {
     ...describeToMap(rawDescribe),
+    client,
     performance: performanceToMap(rawPerformance),
   }
 }

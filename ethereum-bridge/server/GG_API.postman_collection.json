@@ -1,8 +1,7 @@
 {
 	"info": {
-		"name": "GG",
 		"_postman_id": "3a7c41df-5e1c-437f-a534-a89c412205f7",
-		"description": "",
+		"name": "GG",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -27,8 +26,7 @@
 								"api",
 								"wallet-address"
 							]
-						},
-						"description": ""
+						}
 					},
 					"response": []
 				},
@@ -39,7 +37,7 @@
 						"header": [],
 						"body": {},
 						"url": {
-							"raw": "http://localhost:3000/api/check-balances/0x518e12e07415ed96f3df1930326bf41aaa5383bf",
+							"raw": "http://localhost:3000/api/check-balances/0x8bff9474cfb5ab51b0710cdee6f54eed65f1b5f9?tokenAddress=0x436e362ac2c1d5f88986b7553395746446922be2",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -48,10 +46,15 @@
 							"path": [
 								"api",
 								"check-balances",
-								"0x518e12e07415ed96f3df1930326bf41aaa5383bf"
+								"0x8bff9474cfb5ab51b0710cdee6f54eed65f1b5f9"
+							],
+							"query": [
+								{
+									"key": "tokenAddress",
+									"value": "0x436e362ac2c1d5f88986b7553395746446922be2"
+								}
 							]
-						},
-						"description": ""
+						}
 					},
 					"response": []
 				},
@@ -62,7 +65,7 @@
 						"header": [],
 						"body": {},
 						"url": {
-							"raw": "http://localhost:3000/api/contract-status/0xe25896fd4048a710e086bf5f6ebab7bbae12d1db",
+							"raw": "http://localhost:3000/api/contract-status/0xf2e27458d1519eac82e63bbb7db5767ecafdd9c3",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -71,10 +74,9 @@
 							"path": [
 								"api",
 								"contract-status",
-								"0xe25896fd4048a710e086bf5f6ebab7bbae12d1db"
+								"0xf2e27458d1519eac82e63bbb7db5767ecafdd9c3"
 							]
-						},
-						"description": ""
+						}
 					},
 					"response": []
 				},
@@ -90,7 +92,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"callback\": \"http://localhost:3000/api/_test-callback\",\n  \"payload\": {\n    \"tokenContractAddress\": \"0x11e0892806ab9fd37224a2031c51156968c2ee72\",\n    \"clientAddress\": \"0x518e12e07415ed96f3df1930326bf41aaa5383bf\",\n    \"approvalCommissionBenificiaryAddress\": \"0x24a8dcf36178e239134ce89f74b45d734b5780f8\",\n    \"disapprovalCommissionBeneficiaryAddress\": \"0xe354a075b40ce98f1e1b377c0420020f358f2e48\",\n    \"approvalCommissionFraction\": 0.1,\n    \"disapprovalCommissionFraction\": 0.2,\n    \"totalWorkItems\": 100,\n    \"workItemPrice\": \"1\",\n    \"autoApprovalTimeoutSec\": 60\n  }\n}"
+							"raw": "{\n  \"callback\": \"http://localhost:3000/api/_test-callback\",\n  \"payload\": {\n    \"tokenContractAddress\": \"0x436e362ac2c1d5f88986b7553395746446922be2\",\n    \"clientAddress\": \"0x8bff9474cfb5ab51b0710cdee6f54eed65f1b5f9\",\n    \"approvalCommissionBenificiaryAddress\": \"0x24a8dcf36178e239134ce89f74b45d734b5780f8\",\n    \"disapprovalCommissionBeneficiaryAddress\": \"0xe354a075b40ce98f1e1b377c0420020f358f2e48\",\n    \"approvalCommissionFraction\": 0.1,\n    \"disapprovalCommissionFraction\": 0.2,\n    \"totalWorkItems\": 100,\n    \"workItemPrice\": \"1\",\n    \"autoApprovalTimeoutSec\": 60\n  }\n}"
 						},
 						"url": {
 							"raw": "http://localhost:3000/api/deploy-contract",
@@ -103,8 +105,7 @@
 								"api",
 								"deploy-contract"
 							]
-						},
-						"description": ""
+						}
 					},
 					"response": []
 				},
@@ -120,7 +121,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"callback\": \"http://localhost:3000/api/_test-callback\",\n  \"payload\": {\n    \"tokenContractAddress\": \"0x11e0892806ab9fd37224a2031c51156968c2ee72\",\n    \"recepientAddress\": \"0x518e12e07415ed96f3df1930326bf41aaa5383bf\",\n    \"etherValue\": \"1e18\",\n    \"tokenValue\": \"150e18\"\n  }\n}"
+							"raw": "{\n  \"callback\": \"http://localhost:3000/api/_test-callback\",\n  \"payload\": {\n    \"tokenContractAddress\": \"0x436e362ac2c1d5f88986b7553395746446922be2\",\n    \"recepientAddress\": \"0x518e12e07415ed96f3df1930326bf41aaa5383bf\",\n    \"etherValue\": \"1e18\",\n    \"tokenValue\": \"150e18\"\n  }\n}"
 						},
 						"url": {
 							"raw": "http://localhost:3000/api/credit-account",
@@ -133,8 +134,7 @@
 								"api",
 								"credit-account"
 							]
-						},
-						"description": ""
+						}
 					},
 					"response": []
 				},
@@ -150,7 +150,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"callback\": \"http://localhost:3000/api/_test-callback\",\n  \"contractAddress\": \"0xe25896fd4048a710e086bf5f6ebab7bbae12d1db\",\n  \"payload\": {\"0x1ef86a2a5b096efb330ffa6fd30e1a05d517a0bd\": 0,\n  \t\"0x13d0c666a5900169874943e5cebc9980960acefd\": 1}\n}"
+							"raw": "{\n  \"callback\": \"http://localhost:3000/api/_test-callback\",\n  \"contractAddress\": \"0xf2e27458d1519eac82e63bbb7db5767ecafdd9c3\",\n  \"payload\": {\"0x1ef86a2a5b096efb330ffa6fd30e1a05d517a0bd\": 1,\n  \t\"0x13d0c666a5900169874943e5cebc9980960acefd\": 2}\n}"
 						},
 						"url": {
 							"raw": "http://localhost:3000/api/update-completed-work",
@@ -163,8 +163,7 @@
 								"api",
 								"update-completed-work"
 							]
-						},
-						"description": ""
+						}
 					},
 					"response": []
 				},
@@ -180,7 +179,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"callback\": \"localhost\",\n  \"contractAddress\": \"0x0e5415a15678F3316F530CFACe9a6f120AAAAAAA\"\n}"
+							"raw": "{\n  \"callback\": \"http://localhost:3000/api/_test-callback\",\n  \"contractAddress\": \"0x0e5415a15678F3316F530CFACe9a6f120AAAAAAA\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:3000/api/force-finalize",
@@ -193,8 +192,7 @@
 								"api",
 								"force-finalize"
 							]
-						},
-						"description": ""
+						}
 					},
 					"response": []
 				}
@@ -229,8 +227,7 @@
 								"api",
 								"_transferTokens"
 							]
-						},
-						"description": ""
+						}
 					},
 					"response": []
 				},
@@ -246,7 +243,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"actorAddress\": \"0x518e12e07415ed96f3df1930326bf41aaa5383bf\",\n    \"contractAddress\": \"0xe25896fd4048a710e086bf5f6ebab7bbae12d1db\"\n}"
+							"raw": "{\n\t\"actorAddress\": \"0x8bff9474cfb5ab51b0710cdee6f54eed65f1b5f9\",\n    \"contractAddress\": \"0xf2e27458d1519eac82e63bbb7db5767ecafdd9c3\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:3000/api/_activateContract",
@@ -259,8 +256,7 @@
 								"api",
 								"_activateContract"
 							]
-						},
-						"description": ""
+						}
 					},
 					"response": []
 				},
@@ -276,7 +272,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"actorAddress\": \"0x0e5415a15678F3316F530CFACe9a6f120AAAAAAA\",\n    \"contractAddress\": \"0xe25896fd4048a710e086bf5f6ebab7bbae12d1db\",\n    \"workers\": {\"0x13d0c666a5900169874943e5cebc9980960acefd\": \n    \t{\"totalItems\": 1, \"approvedItems\": 0, \"declinedItems\": 1} \n   \t\n    }\n}"
+							"raw": "{\n\t\"actorAddress\": \"0x8bff9474cfb5ab51b0710cdee6f54eed65f1b5f9\",\n    \"contractAddress\": \"0xf2e27458d1519eac82e63bbb7db5767ecafdd9c3\",\n    \"workers\": {\"0x1ef86a2a5b096efb330ffa6fd30e1a05d517a0bd\": {\"approvedItems\": 0, \"declinedItems\": 1},\n  \t\t\"0x13d0c666a5900169874943e5cebc9980960acefd\": {\"approvedItems\": 1, \"declinedItems\": 1}\n    }\n}"
 						},
 						"url": {
 							"raw": "http://localhost:3000/api/_scoreWork",
@@ -289,8 +285,7 @@
 								"api",
 								"_scoreWork"
 							]
-						},
-						"description": ""
+						}
 					},
 					"response": []
 				},
@@ -306,7 +301,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"actorAddress\": \"0x0e5415a15678F3316F530CFACe9a6f120AAAAAAA\",\n    \"contractAddress\": \"0x0e5415a15678F3316F530CFACe9a6f120AAAAAAA\"\n}"
+							"raw": "{\n\t\"actorAddress\": \"0x0e5415a15678F3316F530CFACe9a6f120AAAAAAA\",\n    \"contractAddress\": \"0xf2e27458d1519eac82e63bbb7db5767ecafdd9c3\"\n}"
 						},
 						"url": {
 							"raw": "http://localhost:3000/api/_finalizeContract",
@@ -319,8 +314,7 @@
 								"api",
 								"_finalizeContract"
 							]
-						},
-						"description": ""
+						}
 					},
 					"response": []
 				}

@@ -32,6 +32,7 @@ async function getWeb3() {
 setWeb3Promise(getWeb3())
 
 // Consts
+const ACCOUNT_LOW_BALANCE = new BigNumber("1e50")
 const ETH_ADDRESS_REGEX = /^0x([a-fA-F0-9]{40})$/
 const BIG_NUMBER_REGEX = /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/
 const STUB_ADDRESS = '0x0e5415a15678F3316F530CFACe9a6f120BBBBBBB'
@@ -441,13 +442,21 @@ async function checksOnStartup() {
   const {web3, account} = await getConnection()
   if (account) {
     if (await isAccountLocked(account, web3)) {
-      console.log(`Account is locked. Aborting...`)
+      console.log(`ERROR. Account is locked. Aborting...`)
       process.exit(1)
     }
+    const balance = await web3.eth.getBalance(account)
+    // const balance = new BigNumber(10)
+    if (balance.lt(ACCOUNT_LOW_BALANCE)) {
+      console.log(`WARNING. Low account balance: ${balance}`)
+    }
   } else {
-    console.log(`Account is undefined. Aborting...`)
+    console.log(`ERROR. Account is undefined. Aborting...`)
     process.exit(1)
   }
+
+  
+  
 }
 
 checksOnStartup()

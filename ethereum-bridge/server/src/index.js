@@ -17,7 +17,8 @@ import {promisifyCall} from '../../shared/utils/promisify'
 import TokenContract from '../../shared/token-contract'
 import ProjectContract from '../../shared/project-contract'
 
-const PORT = 3000
+const PORT = process.env.GG_SERVER_PORT || 3000
+const RPC_CONNECTION = process.env.GG_SERVER_RPC_CONNECTION || 'http://127.0.0.1:9545'
 
 const app = new Koa()
 const router = KoaRouter()
@@ -27,8 +28,7 @@ const TODO_IMPLEMENT = new Promise(resolve => resolve({TODO: 'implement'}))
 // const mock = new Mock()
 
 async function getWeb3() {
-  //RPC_CONNECTION
-  const provider = new Web3.providers.HttpProvider('http://127.0.0.1:9545')
+  const provider = new Web3.providers.HttpProvider(RPC_CONNECTION)
   return new Web3(provider)
 }
 
@@ -422,3 +422,4 @@ app.use(router.routes())
 app.listen(PORT)
 
 console.log(`Listening on ${PORT}`)
+console.log(`RPC connection is ${RPC_CONNECTION}`)

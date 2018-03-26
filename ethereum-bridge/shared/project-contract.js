@@ -106,7 +106,6 @@ export default class ProjectContract extends BaseContract {
     let newState = state
 
     while (newState !== State.Finalized) {
-      console.log(`calling forceFinalize...`)
       await this._callContractMethod('forceFinalize', [MAX_FORCE_FINALIZE_GAS])
       newState = +await this.truffleContract.state()
     }

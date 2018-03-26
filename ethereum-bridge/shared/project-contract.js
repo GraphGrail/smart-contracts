@@ -57,6 +57,7 @@ export default class ProjectContract extends BaseContract {
   async activate() {
     const {tokenBalance, totalWorkItems, workItemPrice, state, client} = await this.describe()
 
+    // FIXME: here, multiplying BigNumber with a Number will overflow Number
     this.validateActivationTokenBalance(totalWorkItems * workItemPrice, tokenBalance)
     this.validateContractState(State.New, state)
     this.validateAuthorized(client)
@@ -111,6 +112,7 @@ export default class ProjectContract extends BaseContract {
     }
   }
 
+  // FIXME: rename to assertActorIs(address)
   validateAuthorized = (address) => {
     if (!compareAddress(address, this.account)) {
       throw new UserError(
@@ -132,6 +134,7 @@ export default class ProjectContract extends BaseContract {
   }
 
   validateActivationTokenBalance = (requiredBalance, factBalance) => {
+    // FIXME: requiredBalance and factBalance may be BigNumber's and < operator won't work for them
     if (factBalance < requiredBalance) {
       throw new UserError(
         `Contract needs ${requiredBalance} tokens to be activated, but has only ${factBalance}`,

@@ -37,11 +37,16 @@ export default class BaseContract {
 
   static async at(address) {
     await this._initialized()
-    const truffleContract =  await this.TruffleCls.at(address).then(x => x)
-    if (!truffleContract) {
-      throw new UserError(`No contract at address ${address}`, ErrorCodes.CONTRACT_NOT_FOUND)
+    try {
+      const truffleContract =  await this.TruffleCls.at(address).then(x => x)
+      return new this(this.connection, truffleContract)
+    } catch (err) {
+      if (/no code at address/.test(err.message)) {
+        throw new UserError(err.message, ErrorCodes.CONTRACT_NOT_FOUND, err)
+      } else {
+        throw err
+      }
     }
-    return new this(this.connection, truffleContract)
   }
 
   static async deployed() {

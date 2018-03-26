@@ -10,6 +10,8 @@ import {
   performanceToArrays,
 } from './contract-api-helpers'
 
+import compareAddress from './utils/compare-address'
+
 import builtProjectContract from '../../truffle/build/contracts/GGProject.json'
 
 
@@ -61,7 +63,11 @@ export default class ProjectContract extends BaseContract {
   }
 
   async updateTotals(totalsMap) {
-    // TODO: check basic pre-conditions
+    const {state, owner, performance} = await this.describe()
+
+    this.validateAuthorized(owner)
+    this.validateContractState(State.Active, state)
+
     const {addresses, totals} = totalsToArrays(totalsMap)
     return this._callContractMethod('updateTotals', [addresses, totals], {from: this.account})
   }
@@ -96,10 +102,10 @@ export default class ProjectContract extends BaseContract {
     return this._callContractMethod('forceFinalize')
   }
 
-  validateAuthorized = (client) => {
-    if (client !== this.account) {
+  validateAuthorized = (address) => {
+    if (!compareAddress(address, this.account)) {
       throw new UserError(
-        `Only authorized address for contract is ${client}, but you're running as ${this.account} now`,
+        `Only authorized address for action is ${address}, but you're running as ${this.account} now`,
         ErrorCodes.UNAUTHORIZED
       )
     }

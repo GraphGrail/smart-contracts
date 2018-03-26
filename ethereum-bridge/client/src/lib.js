@@ -137,8 +137,7 @@ async function activateContract(contractAddress) {
 
 async function scoreWork(contractAddress, workers) {
   assertNotInitialized()
-  //TODO: check that it's a ProjectContract
-  //TODO: check that it's client is a contract-specified one
+  validateWorkersData(workers)
   const project = await ProjectContract.at(contractAddress)
   await project.updatePerformance(workers)
   return
@@ -146,8 +145,27 @@ async function scoreWork(contractAddress, workers) {
 
 async function finalizeContract(contractAddress) {
   assertNotInitialized()
-  //TODO: check that it's a ProjectContract
-  //TODO: check that it's client is a contract-specified one
   const project = await ProjectContract.at(contractAddress)
   await project.finalize()
+}
+
+function validateWorkersData(workers) {
+  Object.keys(workers).forEach(workerAddress => {
+    const workerScoring = workers[workerAddress]
+    const {approvedItems, declinedItems} = workerScoring
+    if (!approvedItems && !declinedItems) {
+      throw new UserError(`Worker data should contain either approvedItems or declinedItems field`,
+        ErrorCodes.INVALID_DATA)
+    }
+    if (approvedItems && !Number.isInteger(approvedItems)) {
+      throw new UserError(`approvedItems should be integer, instead got ${approvedItems}`,
+        ErrorCodes.INVALID_DATA)
+    }
+    if (declinedItems && !Number.isInteger(declinedItems)) {
+      throw new UserError(`declinedItems should be integer, instead got ${declinedItems}`,
+        ErrorCodes.INVALID_DATA)
+    }
+  })
+
+  return
 }

@@ -53,26 +53,9 @@ export default class ProjectContract extends BaseContract {
   async activate() {
     const {tokenBalance, totalWorkItems, workItemPrice, state, client} = await this.describe()
 
-    if (tokenBalance < totalWorkItems * workItemPrice) {
-      throw new UserError(
-        `Contract needs ${totalWorkItems * workItemPrice} tokens to be activated, but has only ${tokenBalance}`,
-        ErrorCodes.INSUFFICIENT_TOKEN_BALANCE
-      )
-    }
-
-    if (state !== State.New) {
-      throw new UserError(
-        `Contract should be in New state to be activated, but is in ${stateToString(state)}`,
-        ErrorCodes.INVALID_CONTRACT_STATE
-      )
-    }
-
-    if (client !== this.account) {
-      throw new UserError(
-        `Only authorized address for contract is ${client}, but you're running as ${this.account} now`,
-        ErrorCodes.UNAUTHORIZED
-      )
-    }
+    this.validateActivationTokenBalance(totalWorkItems * workItemPrice, tokenBalance)
+    this.validateContractState(State.New, state)
+    this.validateAuthorized(client)
 
     return this._callContractMethod('activate')
   }
@@ -84,7 +67,12 @@ export default class ProjectContract extends BaseContract {
   }
 
   async updatePerformance(performanceMap) {
-    // TODO: check basic pre-conditions
+    const {state, client, performance} = await this.describe()
+
+    this.validateContractState(State.Active, state)
+    this.validateAuthorized(client)
+    this.validatePerformanceUpdate(performance, performanceMap)
+
     const {addresses, approved, declined} = performanceToArrays(performanceMap)
     return this._callContractMethod(
       'updatePerformance',
@@ -94,13 +82,81 @@ export default class ProjectContract extends BaseContract {
   }
 
   async finalize() {
-    // TODO: check basic pre-conditions
+    const {state, client, canFinalize} = await this.describe()
+
+    this.validateContractState(State.Active, state)
+    this.validateAuthorized(client)
+    this.validateFinalizability(canFinalize)
+
     return this._callContractMethod('finalize')
   }
 
   async forceFinalize() {
     // TODO: check basic pre-conditions
     return this._callContractMethod('forceFinalize')
+  }
+
+  validateAuthorized = (client) => {
+    if (client !== this.account) {
+      throw new UserError(
+        `Only authorized address for contract is ${client}, but you're running as ${this.account} now`,
+        ErrorCodes.UNAUTHORIZED
+      )
+    }
+    return
+  }
+
+  validateContractState = (expected, fact) => {
+    if (expected !== fact) {
+      throw new UserError(
+        `Contract should be in ${stateToString(expected)} state, but is in `
+        +`${stateToString(fact)}`,
+        ErrorCodes.INVALID_CONTRACT_STATE
+      )
+    }
+  }
+
+  validateActivationTokenBalance = (requiredBalance, factBalance) => {
+    if (factBalance < requiredBalance) {
+      throw new UserError(
+        `Contract needs ${requiredBalance} tokens to be activated, but has only ${factBalance}`,
+        ErrorCodes.INSUFFICIENT_TOKEN_BALANCE
+      )
+    }
+  }
+
+  validatePerformanceUpdate = (currentPerformanceData, update) => {
+    Object.keys(update).forEach(updateItemAddress => {
+      const existingItem = currentPerformanceData[updateItemAddress]
+      if (!existingItem) {
+        throw new UserError(`Got performance update for unknown address ${updateItemAddress}`,
+          ErrorCodes.INVALID_DATA)
+      }
+      const {approvedItems, declinedItems} = update[updateItemAddress]
+      const updatingItems = (approvedItems || 0) + (declinedItems || 0)
+      if (approvedItems && approvedItems < 0) {
+        throw new UserError(`Performance data for ${updateItemAddress} lists negative`
+          + ` ${approvedItems} approved items work items`,
+          ErrorCodes.INVALID_DATA)
+      }
+      if (declinedItems && declinedItems < 0) {
+        throw new UserError(`Performance data for ${updateItemAddress} lists negative`
+          + ` ${declinedItems} declined items work items`,
+          ErrorCodes.INVALID_DATA)
+      }
+      if (existingItem.totalItems !== updatingItems) {
+        throw new UserError(`Performance data for ${updateItemAddress} lists ${updatingItems} work`
+          + ` items while contract awaits update on ${existingItem.totalItems} work items`,
+          ErrorCodes.INVALID_DATA)
+      }
+    })
+    return
+  }
+
+  validateFinalizability = (canFinalize) => {
+    if (!canFinalize) {
+      throw new UserError(`Contract has pending work and couldn't be finalized`, ErrorCodes.INVALID_CONTRACT_STATE)
+    }
   }
 
 }

@@ -126,16 +126,7 @@ router.post('/api/update-completed-work', koaBody, async ctx => {
   const {callback, contractAddress, payload} = ctx.request.body
 
   async function run() {
-    let contract
-    try {
-      contract = await ProjectContract.at(contractAddress)
-    } catch (err) {
-      if (/no code at address/.test(err.message)) {
-        throw new UserError(err.message, ErrorCodes.CONTRACT_NOT_FOUND)
-      } else {
-        throw err
-      }
-    }
+    const contract = await ProjectContract.at(contractAddress)
     await contract.updateTotals(payload)
     return {success: true, error: null}
   }
@@ -172,7 +163,7 @@ router.get('/api/contract-status/:address', async ctx => {
       }
     })
   } catch (err) {
-    if (/no code at address/.test(err.message)) {
+    if (err.code === ErrorCodes.CONTRACT_NOT_FOUND) {
       ctx.throw(404, JSON.stringify({error: err.message}))
     } else {
       ctx.throw(400, JSON.stringify({error: err.message}))
@@ -198,16 +189,7 @@ router.post('/api/force-finalize', koaBody, ctx => {
   const {callback, contractAddress} = ctx.request.body
 
   async function run() {
-    let contract
-    try {
-      contract = await ProjectContract.at(contractAddress)
-    } catch (err) {
-      if (/no code at address/.test(err.message)) {
-        throw new UserError(err.message, ErrorCodes.CONTRACT_NOT_FOUND)
-      } else {
-        throw err
-      }
-    }
+    const contract = await ProjectContract.at(contractAddress)
     await contract.forceFinalize()
     return {success: true, error: null}
   }
@@ -242,17 +224,7 @@ router.post('/api/credit-account', koaBody, ctx => {
   } = ctx.request.body
 
   async function run() {
-    let token
-    try {
-      token = await TokenContract.at(tokenContractAddress)
-    } catch (err) {
-      if (/no code at address/.test(err.message)) {
-        throw new UserError(err.message, ErrorCodes.CONTRACT_NOT_FOUND)
-      } else {
-        throw err
-      }
-    }
-
+    const token = await TokenContract.at(tokenContractAddress)
     await token.transfer(recepientAddress, tokenValue)
 
     const {web3, account} = await getConnection()

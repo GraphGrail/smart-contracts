@@ -22,9 +22,9 @@ export default class ProjectContract extends BaseContract {
   async transfer(to, value) {
     const tokenBalance = await this.balanceOf(this.account)
 
-    if (tokenBalance.lt(new BigNumber(value))) {
-      throw new UserError(`Wanted to send ${value} tokens to ${to}, but have only ${tokenBalance} `
-        +`at current address ${this.account}`, ErrorCodes.INSUFFICIENT_TOKEN_BALANCE)
+    if (tokenBalance.lt(value)) {
+      throw new UserError(`Failed to send ${value} tokens from ${this.account} to ${to}, ` +
+        `current balance ${tokenBalance}`, ErrorCodes.INSUFFICIENT_TOKEN_BALANCE)
     }
 
     const result = await this._callContractMethod('transfer', [to, value])

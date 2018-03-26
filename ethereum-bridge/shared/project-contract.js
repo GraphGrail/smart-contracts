@@ -17,6 +17,8 @@ import builtProjectContract from '../../truffle/build/contracts/GGProject.json'
 
 const MAX_FORCE_FINALIZE_GAS = 2000000
 
+// TODO: use standard class function declaration instead of class prop + arrow
+//
 export default class ProjectContract extends BaseContract {
   static builtContract = builtProjectContract
 
@@ -55,6 +57,7 @@ export default class ProjectContract extends BaseContract {
   }
 
   async activate() {
+    // TODO: use helper that doesn't request whole performance map
     const {tokenBalance, totalWorkItems, workItemPrice, state, client} = await this.describe()
 
     // FIXME: here, multiplying BigNumber with a Number will overflow Number
@@ -75,14 +78,14 @@ export default class ProjectContract extends BaseContract {
     return this._callContractMethod('updateTotals', [addresses, totals], {from: this.account})
   }
 
-  async updatePerformance(performanceMap) {
-    const {state, client, performance} = await this.describe()
+  async updatePerformance(performanceUpdate) {
+    const {state, client, performance: currentPerformanceMap} = await this.describe()
 
     this.validateContractState(State.Active, state)
     this.validateAuthorized(client)
-    this.validatePerformanceUpdate(performance, performanceMap)
+    this.validatePerformanceUpdate(currentPerformanceMap, performanceUpdate)
 
-    const {addresses, approved, declined} = performanceToArrays(performanceMap)
+    const {addresses, approved, declined} = performanceToArrays(performanceUpdate)
     return this._callContractMethod(
       'updatePerformance',
       [addresses, approved, declined],
@@ -91,6 +94,7 @@ export default class ProjectContract extends BaseContract {
   }
 
   async finalize() {
+    // TODO: use helper that doesn't request whole performance map
     const {state, client, canFinalize} = await this.describe()
 
     this.validateContractState(State.Active, state)
@@ -101,6 +105,7 @@ export default class ProjectContract extends BaseContract {
   }
 
   async forceFinalize() {
+    // TODO: use helper that doesn't request whole performance map
     const {state, canForceFinalize} = await this.describe()
     this.validateForceFinalizability(state, canForceFinalize)
 
@@ -150,33 +155,36 @@ export default class ProjectContract extends BaseContract {
         throw new UserError(`Got performance update for unknown address ${updateItemAddress}`,
           ErrorCodes.INVALID_DATA)
       }
+      // TODO: would be cool to validate that approvedItems and declinedItems didn't decrease
       const {approvedItems, declinedItems} = update[updateItemAddress]
-      const updatingItems = (approvedItems || 0) + (declinedItems || 0)
+      const updatingItemsCount = (approvedItems || 0) + (declinedItems || 0)
       if (approvedItems && approvedItems < 0) {
         throw new UserError(`Performance data for ${updateItemAddress} lists negative`
-          + ` ${approvedItems} approved items work items`,
+          + ` ${approvedItems} approved work items`,
           ErrorCodes.INVALID_DATA)
       }
       if (declinedItems && declinedItems < 0) {
         throw new UserError(`Performance data for ${updateItemAddress} lists negative`
-          + ` ${declinedItems} declined items work items`,
+          + ` ${declinedItems} declined work items`,
           ErrorCodes.INVALID_DATA)
       }
-      if (existingItem.totalItems !== updatingItems) {
-        throw new UserError(`Performance data for ${updateItemAddress} lists ${updatingItems} work`
-          + ` items while contract awaits update on ${existingItem.totalItems} work items`,
+      if (existingItem.totalItems !== updatingItemsCount) {
+        throw new UserError(`Performance data for ${updateItemAddress} lists ${updatingItemsCount}`
+          + ` work items while contract awaits update on ${existingItem.totalItems} work items`,
           ErrorCodes.INVALID_DATA)
       }
     })
     return
   }
 
+  // FIXME: rename to assertCanFinalize
   validateFinalizability = (canFinalize) => {
     if (!canFinalize) {
       throw new UserError(`Contract has pending work and couldn't be finalized`, ErrorCodes.INVALID_CONTRACT_STATE)
     }
   }
 
+  // FIXME: rename to assertCanForceFinalize
   validateForceFinalizability = (state, canForceFinalize) => {
     if (state !== State.Active && state !== State.ForceFinalizing) {
       throw new UserError(

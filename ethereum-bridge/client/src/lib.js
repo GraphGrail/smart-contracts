@@ -1,4 +1,3 @@
-import BigNumber from 'bignumber.js'
 import ethereumAddress from 'ethereum-address'
 
 import TokenContract from '../../shared/token-contract'
@@ -9,7 +8,6 @@ import {promisifyCall} from '../../shared/utils/promisify'
 import {getConnection, setWeb3Promise} from '../../shared/utils/connection'
 
 import getWeb3 from './utils/get-web3'
-import validateResponseStatus from './utils/validate-response-status'
 
 export default {
   init,
@@ -30,7 +28,6 @@ const RESOLVED_PROMISE = new Promise(resolve => resolve())
 let isInitializing = false
 let moduleIsInitialized = false
 let tokenContract
-let internalApi
 
 async function init(tokenContractAddress, expectedNetworkId = 4, internalApiAddress = null) {
   if (isInitializing || moduleIsInitialized) {
@@ -49,7 +46,7 @@ async function init(tokenContractAddress, expectedNetworkId = 4, internalApiAddr
   }
 }
 
-async function _init(tokenContractAddress, expectedNetworkId, internalApiAddress) {
+async function _init(tokenContractAddress, expectedNetworkId) {
   if (!ethereumAddress.isAddress(tokenContractAddress)) {
     throw new UserError(
       `Invalid Ethereum address: ${tokenContractAddress}`,
@@ -58,8 +55,8 @@ async function _init(tokenContractAddress, expectedNetworkId, internalApiAddress
   }
 
   tokenContract = await TokenContract.at(tokenContractAddress)
-  internalApi = internalApiAddress
 
+  // TODO: check that it doesn't throw when no Ethereum client found
   const {web3, networkId, account} = await getConnection()
 
   if (!networkId) {
@@ -77,7 +74,6 @@ async function _init(tokenContractAddress, expectedNetworkId, internalApiAddress
     )
   }
 
-  moduleIsInitialized = true
   return account
 }
 
@@ -85,25 +81,25 @@ function isInitialized() {
   return isInitializing || moduleIsInitialized
 }
 
-function assertNotInitialized() {
-  if (isInitializing || !moduleIsInitialized) {
+function assertInitialized() {
+  if (!moduleIsInitialized) {
     throw new UserError(`Not initialized`, ErrorCodes.ALREADY_INITIALIZED)
   }
 }
 
 async function getClientAddress() {
-  assertNotInitialized()
+  assertInitialized()
   const {account} = await getConnection()
   return account
 }
 
 async function checkBalances(address) {
-  assertNotInitialized()
+  assertInitialized()
   const {web3, account} = await getConnection()
   const [etherBigNumber, tokenBigNumber] = await Promise.all([
     promisifyCall(web3.eth.getBalance, web3.eth, [address]),
     tokenContract.balanceOf(address),
-    ])
+  ])
   return {
     ether: etherBigNumber.toString(),
     token: tokenBigNumber.toString()
@@ -111,32 +107,32 @@ async function checkBalances(address) {
 }
 
 function isTransacting() {
-  assertNotInitialized()
+  assertInitialized()
   return false
 }
 
 function activeTransactionFinishedPromise() {
-  assertNotInitialized()
+  assertInitialized()
   return RESOLVED_PROMISE
 }
 
 async function transferTokensTo(address, amount) {
-  assertNotInitialized()
-  const res = await tokenContract.transfer(address, amount)
+  assertInitialized()
+  await tokenContract.transfer(address, amount)
   return
 }
 
 async function activateContract(contractAddress) {
-  assertNotInitialized()
-  //TODO: check that it's a ProjectContract
-  //TODO: check that it's client is a contract-specified one
+  assertInitialized()
+  // TODO: check that it's a ProjectContract
+  // TODO: check that client is the contract-specified one
   const project = await ProjectContract.at(contractAddress)
   await project.activate()
   return
 }
 
 async function scoreWork(contractAddress, workers) {
-  assertNotInitialized()
+  assertInitialized()
   validateWorkersData(workers)
   const project = await ProjectContract.at(contractAddress)
   await project.updatePerformance(workers)
@@ -144,7 +140,7 @@ async function scoreWork(contractAddress, workers) {
 }
 
 async function finalizeContract(contractAddress) {
-  assertNotInitialized()
+  assertInitialized()
   const project = await ProjectContract.at(contractAddress)
   await project.finalize()
 }

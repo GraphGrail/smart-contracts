@@ -33,19 +33,26 @@ const JOI_STATUS_MAP = Joi.object().pattern(ETH_ADDRESS_REGEX, Joi.number().requ
 const router = KoaRouter()
 const koaBody = KoaBody()
 
+function logRequest(ctx) {
+  ctx.log.info({params: ctx.params, query: ctx.request.query}, 'new request')
+}
+
+function logResponse(ctx, json) {
+  ctx.log.info({response: json}, 'response is ready')
+}
+
 // Public API
 // GET wallet-address
 router.get('/api/wallet-address', async ctx => {
-  console.log('[/api/wallet-address]')
-
+  logRequest(ctx)
   const {account: address} = await getConnection()
-
   ctx.body = {address}
+  logResponse(ctx, ctx.body)
 })
 
 // GET check-balances/:address?tokenAddress=0x436e362ac2c1d5f88986b7553395746446922be2
 router.get('/api/check-balances/:address', async ctx => {
-  console.log('[/api/checkBalances]', ctx.params, ctx.request.query)
+  logRequest(ctx)
 
   const address = ctx.params['address']
   if (!address.match(ETH_ADDRESS_REGEX)) {
@@ -53,6 +60,10 @@ router.get('/api/check-balances/:address', async ctx => {
   }
 
   const tokenAddress = ctx.request.query['tokenAddress']
+  if (!tokenAddress) {
+    ctx.throw(400, JSON.stringify({error: 'token address missed'}))
+  }
+
   if (!tokenAddress.match(ETH_ADDRESS_REGEX)) {
     ctx.throw(400, JSON.stringify({error: 'token address is invalid'}))
   }
@@ -62,11 +73,12 @@ router.get('/api/check-balances/:address', async ctx => {
   const {web3} = await getConnection()
   const ethBalance = await web3.eth.getBalance(address)
   ctx.body = {token: result, ether: ethBalance}
+  logResponse(ctx, ctx.body)
 })
 
 // POST deploy-contract
 router.post('/api/deploy-contract', koaBody, ctx => {
-  console.log('[/api/deploy-contract]', ctx.request.body)
+  logRequest(ctx)
 
   const schema = Joi.object().keys({
     callback: Joi.string().required(),
@@ -105,11 +117,12 @@ router.post('/api/deploy-contract', koaBody, ctx => {
 
   const taskId = notifyWhenCompleted(callback, project)
   ctx.body = {taskId}
+  logResponse(ctx, ctx.body)
 })
 
 // POST update-completed-work
 router.post('/api/update-completed-work', koaBody, async ctx => {
-  console.log('[/api/update-completed-work]', ctx.request.body)
+  logRequest(ctx)
 
   const schema = Joi.object().keys({
     callback: Joi.string().required(),
@@ -133,11 +146,12 @@ router.post('/api/update-completed-work', koaBody, async ctx => {
 
   const taskId = notifyWhenCompleted(callback, run())
   ctx.body = {taskId}
+  logResponse(ctx, ctx.body)
 })
 
 // GET contract-status
 router.get('/api/contract-status/:address', async ctx => {
-  console.log('[/api/contract-status]', ctx.params)
+  logRequest(ctx)
 
   const address = ctx.params['address']
   if (!address.match(ETH_ADDRESS_REGEX)) {
@@ -162,11 +176,12 @@ router.get('/api/contract-status/:address', async ctx => {
     workers: performance,
     ...other,
   }
+  logResponse(ctx, ctx.body)
 })
 
 // POST force-finalize
 router.post('/api/force-finalize', koaBody, ctx => {
-  console.log('[/api/force-finalize]', ctx.request.body)
+  logRequest(ctx)
 
   const schema = Joi.object().keys({
     callback: Joi.string().required(),
@@ -189,11 +204,12 @@ router.post('/api/force-finalize', koaBody, ctx => {
 
   const taskId = notifyWhenCompleted(callback, run())
   ctx.body = {taskId}
+  logResponse(ctx, ctx.body)
 })
 
 // POST credit-account
 router.post('/api/credit-account', koaBody, ctx => {
-  console.log('[/api/credit-account]', ctx.request.body)
+  logRequest(ctx)
 
   const schema = Joi.object().keys({
     callback: Joi.string().required(),
@@ -245,6 +261,7 @@ router.post('/api/credit-account', koaBody, ctx => {
 
   const taskId = notifyWhenCompleted(callback, run())
   ctx.body = {taskId}
+  logResponse(ctx, ctx.body)
 })
 
 // Internal API - FOR TESTING purposes only
@@ -258,7 +275,7 @@ if (config.isTestRun) {
 
   // POST _activateContract
   router.post('/api/_activateContract', koaBody, async ctx => {
-    console.log('[/api/_activateContract]', ctx.request.body)
+    logRequest(ctx)
 
     const schema = Joi.object().keys({
       actorAddress: JOI_ETH_ADDRESS,
@@ -280,7 +297,6 @@ if (config.isTestRun) {
       contract = await ProjectContract.at(contractAddress)
       await contract.activate()
     } catch (err) {
-      console.log(err.message, err.code)
       if (err.code === ErrorCodes.INSUFFICIENT_ETHER_BALANCE) {
         ctx.throw(400, JSON.stringify({error: err.message}))
       }
@@ -294,11 +310,12 @@ if (config.isTestRun) {
     }
 
     ctx.body = {status: 'ok'}
+    logResponse(ctx, ctx.body)
   })
 
   // POST _scoreWork
   router.post('/api/_scoreWork', koaBody, async ctx => {
-    console.log('[/api/_scoreWork]', ctx.request.body)
+    logRequest(ctx)
 
     const schema = Joi.object().keys({
       actorAddress: JOI_ETH_ADDRESS,
@@ -318,7 +335,6 @@ if (config.isTestRun) {
       const contract = await ProjectContract.at(contractAddress)
       await contract.updatePerformance(workers)
     } catch (err) {
-      console.log(err.message, err.code)
       if (err.code === ErrorCodes.INSUFFICIENT_ETHER_BALANCE) {
         ctx.throw(400, JSON.stringify({error: err.message}))
       }
@@ -329,10 +345,11 @@ if (config.isTestRun) {
     }
 
     ctx.body = {status: 'ok'}
+    logResponse(ctx, ctx.body)
   })
 
   router.post('/api/_finalizeContract', koaBody, async ctx => {
-    console.log('[/api/_finalizeContract]', ctx.request.body)
+    logRequest(ctx)
 
     const schema = Joi.object().keys({
       actorAddress: JOI_ETH_ADDRESS,
@@ -350,7 +367,6 @@ if (config.isTestRun) {
       const contract = await ProjectContract.at(contractAddress)
       await contract.finalize()
     } catch (err) {
-      console.log(err.message, err.code)
       if (err.code === ErrorCodes.INSUFFICIENT_ETHER_BALANCE) {
         ctx.throw(400, JSON.stringify({error: err.message}))
       }
@@ -361,15 +377,15 @@ if (config.isTestRun) {
     }
 
     ctx.body = {status: 'ok'}
+    logResponse(ctx, ctx.body)
   })
 
 
   router.post('/api/_test-callback', koaBody, ctx => {
-    console.log('POST /api/_test-callback:', ctx.request.body)
+    logRequest(ctx)
     ctx.body = {ok: true}
+    logResponse(ctx, ctx.body)
   })
-
-  console.log(`GG_SERVER_TEST_RUN is enabled`)
 }
 
 export {router}

@@ -1,6 +1,7 @@
 import Pino from 'pino'
 const pino = Pino()
 
+import KoaPinoLogger from 'koa-pino-logger'
 import BigNumber from 'bignumber.js'
 import Koa from 'koa'
 import cors from '@koa/cors'
@@ -79,6 +80,25 @@ async function run() {
   await checksOnStartup()
 
   const app = new Koa()
+
+  app.use(KoaPinoLogger({
+    serializers: {
+      req: (req) => {
+        return {
+          id: req.id,
+          method: req.method,
+          url: req.url,
+        }
+      },
+      res: (res) => {
+        return {
+          statusCode: res.statusCode,
+          statusMessage: res.statusMessage,
+          contentLenght: res._contentLength,
+        }
+      }
+    },
+  }))
 
   app.use(cors())
   app.use(router.routes())

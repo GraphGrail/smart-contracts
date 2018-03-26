@@ -143,31 +143,24 @@ router.get('/api/contract-status/:address', async ctx => {
   if (!address.match(ETH_ADDRESS_REGEX)) {
     ctx.throw(400, JSON.stringify({error: 'address is invalid'}))
   }
-  function stateToString(state) {
-    switch(state) {
-      case 0: return "NEW"
-      case 1: return "ACTIVE"
-      case 2: return "FINALIZED"
-      default: return state
-    }
-  }
 
+  let contract
   try {
-    const contract = await ProjectContract.at(address)
-    ctx.body = await contract.describe().then(r => {
-      const {state, performance, ...other} = r
-      return {
-        "state": stateToString(state),
-        "workers": performance,
-        ...other,
-      }
-    })
+    contract = await ProjectContract.at(address)
   } catch (err) {
     if (err.code === ErrorCodes.CONTRACT_NOT_FOUND) {
       ctx.throw(404, JSON.stringify({error: err.message}))
     } else {
-      ctx.throw(400, JSON.stringify({error: err.message}))
+      ctx.throw(500, JSON.stringify({error: err.message}))
     }
+  }
+
+  const {state, performance, ...other} = await contract.describe()
+
+  ctx.body = {
+    state: ProjectContract.State.stringify(state).toUpperCase(),
+    workers: performance,
+    ...other,
   }
 })
 
@@ -295,7 +288,7 @@ if (config.isTestRun) {
         ctx.throw(400, JSON.stringify({error: err.message}))
       }
       if (err.code === ErrorCodes.CONTRACT_NOT_FOUND) {
-        ctx.throw(400, JSON.stringify({error: err.message}))
+        ctx.throw(404, JSON.stringify({error: err.message}))
       }
       throw err
     }
@@ -330,7 +323,7 @@ if (config.isTestRun) {
         ctx.throw(400, JSON.stringify({error: err.message}))
       }
       if (err.code === ErrorCodes.CONTRACT_NOT_FOUND) {
-        ctx.throw(400, JSON.stringify({error: err.message}))
+        ctx.throw(404, JSON.stringify({error: err.message}))
       }
       throw err
     }
@@ -362,7 +355,7 @@ if (config.isTestRun) {
         ctx.throw(400, JSON.stringify({error: err.message}))
       }
       if (err.code === ErrorCodes.CONTRACT_NOT_FOUND) {
-        ctx.throw(400, JSON.stringify({error: err.message}))
+        ctx.throw(404, JSON.stringify({error: err.message}))
       }
       throw err
     }

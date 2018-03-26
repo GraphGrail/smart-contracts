@@ -1,3 +1,6 @@
+import Pino from 'pino'
+const pino = Pino()
+
 import BigNumber from 'bignumber.js'
 import Koa from 'koa'
 import cors from '@koa/cors'
@@ -17,33 +20,46 @@ async function getWeb3() {
   return new Web3(provider)
 }
 
+function buildLogDetails(account, networkId, balance) {
+  const result = {}
+  result['account'] = account
+
+  if (networkId) {
+    result['networkId'] = networkId
+  }
+
+  if (balance) {
+    result['balance'] = balance
+  }
+  return result
+}
+
 async function checksOnStartup() {
   const {web3, account} = await getConnection()
+  const networkId = await promisifyCall(web3.version.getNetwork, web3.version)
 
   if (!account) {
-    console.log(`ERROR: no accounts set in Ethereum client. Aborting.`)
+    pino.error('no accounts set in Ethereum client')
     return process.exit(1)
   }
 
-  console.log(`Using account with index 0: ${account}`)
-
   if (await isAccountLocked(account, web3)) {
-    console.log(`ERROR: account is locked. Aborting.`)
+    pino.error(buildLogDetails(account, networkId), 'account is locked')
     return process.exit(1)
   }
 
   const balance = await promisifyCall(web3.eth.getBalance, web3.eth, [account])
+  const balanceEth = web3.fromWei(balance, 'ether')
 
   if (balance.lt(ACCOUNT_CRITICAL_LOW_BALANCE)) {
-    console.log(`ERROR: account balance is too low (${web3.fromWei(balance, 'ether')} ` +
-      `ETH). Aborting.`)
+    pino.error(buildLogDetails(account, networkId, balanceEth), 'account balance is too low')
     return process.exit(1)
   }
 
   if (balance.lt(ACCOUNT_LOW_BALANCE)) {
-    console.log(`WARNING: low account balance: ${web3.fromWei(balance, 'ether')} ETH`)
+    pino.warn(buildLogDetails(account, networkId, balanceEth), 'low account balance')
   } else {
-    console.log(`Account balance: ${web3.fromWei(balance, 'ether')} ETH`)
+    pino.info(buildLogDetails(account, networkId, balanceEth), 'account balance')
   }
 }
 
@@ -57,7 +73,7 @@ async function isAccountLocked(address, web3) {
 }
 
 async function run() {
-  console.log(`Node.js version: ${process.versions.node}`)
+  pino.info({version: process.versions.node}, 'node version')
 
   setWeb3Promise(getWeb3())
   await checksOnStartup()
@@ -67,8 +83,8 @@ async function run() {
   app.use(cors())
   app.use(router.routes())
 
-  await promisifyCall(app.listen, app, [config.port])
-  console.log(`Listening on ${config.port} port`)
+  await promisifyCall(app.listen, app, [config.port, config.host])
+  pino.info('app started')
 }
 
-run().catch(err => console.log(`Failed to start: ${err.stack}`))
+run().catch(err => pino.error(err, `failed to start`))

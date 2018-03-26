@@ -98,7 +98,11 @@ export default class ProjectContract extends BaseContract {
   }
 
   async forceFinalize() {
-    // TODO: check basic pre-conditions
+    const {state, canForceFinalize} = await this.describe()
+
+    this.validateContractState(State.Active, state)
+    this.validateForceFinalizability(canForceFinalize)
+
     return this._callContractMethod('forceFinalize')
   }
 
@@ -162,6 +166,12 @@ export default class ProjectContract extends BaseContract {
   validateFinalizability = (canFinalize) => {
     if (!canFinalize) {
       throw new UserError(`Contract has pending work and couldn't be finalized`, ErrorCodes.INVALID_CONTRACT_STATE)
+    }
+  }
+
+  validateForceFinalizability = (canForceFinalize) => {
+    if (!canForceFinalize) {
+      throw new UserError(`Contract couldn't be force-finalized`, ErrorCodes.INVALID_CONTRACT_STATE)
     }
   }
 

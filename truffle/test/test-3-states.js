@@ -99,7 +99,7 @@ contract('GGProject: states checks', (accounts) => {
   })
 
   it('fails to forceFinalize in Active state', async () => {
-    await assertRevert(contract.forceFinalize({from: addr.client}))
+    await assertRevert(contract.forceFinalize(2000000, {from: addr.client}))
   })
 
   it('activates contract', async () => {
@@ -147,7 +147,9 @@ contract('GGProject: states checks', (accounts) => {
   })
 
   it('fails to forceFinalize in Finalized state', async () => {
-    await assertRevert(contract.forceFinalize({from: addr.client}))
+    await assertRevert(contract.forceFinalize(2000000, {from: addr.client}))
   })
+
+  // Note: tests for ForceFinalizing state are in test-6-force-finalize.js
 
 })

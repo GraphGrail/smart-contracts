@@ -14,6 +14,7 @@ contract GGProject {
   enum State {
     New,
     Active,
+    ForceFinalizing,
     Finalized
   }
 
@@ -44,8 +45,15 @@ contract GGProject {
   mapping(address => ContractorPerformance) public performanceByContractor;
   address[] public contractors;
 
+  uint256 public lastFinalizedItemIndex = 0;
+
   modifier atState(State _state) {
     require(state == _state);
+    _;
+  }
+
+  modifier atEitherOfStates(State state1, State state2) {
+    require(state == state1 || state == state2);
     _;
   }
 
@@ -148,10 +156,14 @@ contract GGProject {
     return totalWorkItems - totalApprovedItems - totalPendingItems;
   }
 
-  function hasPendingItems() public view returns (bool) {
+  function getNumPendingItems() public view returns (uint256) {
     uint32 totalPendingItems;
     (, totalPendingItems) = _getPerformanceTotals();
-    return totalPendingItems != 0;
+    return totalPendingItems;
+  }
+
+  function hasPendingItems() public view returns (bool) {
+    return getNumPendingItems() != 0;
   }
 
   function getCanFinalize() public view returns (bool) {
@@ -164,7 +176,9 @@ contract GGProject {
   }
 
   function getCanForceFinalize() public view returns (bool) {
-    return hasPendingItems() && getTimestamp() >= getCanForceFinalizeAt();
+    return (state == State.ForceFinalizing) || (
+      hasPendingItems() && getTimestamp() >= getCanForceFinalizeAt()
+    );
   }
 
   function getPerformance() external view returns (address[], uint256[], uint256[], uint256[]) {
@@ -288,10 +302,14 @@ contract GGProject {
     _finalizeAndRefundClient();
   }
 
-  function forceFinalize() public atState(State.Active) {
-    require(getCanForceFinalize());
+  function forceFinalize(uint256 maxGas) public {
+    uint256 initialGas = msg.gas + 40000;
 
-    for (uint256 i = 0; i < contractors.length; i++) {
+    require(state == State.ForceFinalizing || getCanForceFinalize());
+
+    uint256 i = lastFinalizedItemIndex;
+
+    for (; i < contractors.length && initialGas - msg.gas < maxGas; i++) {
       address contractorAddr = contractors[i];
       ContractorPerformance storage perf = performanceByContractor[contractorAddr];
       uint32 pendingItems = perf.totalItems - perf.approvedItems - perf.declinedItems;
@@ -307,7 +325,14 @@ contract GGProject {
       }
     }
 
-    _finalizeAndRefundClient();
+    if (i < contractors.length) {
+      lastFinalizedItemIndex = i;
+      if (state != State.ForceFinalizing) {
+        state = State.ForceFinalizing;
+      }
+    } else {
+      _finalizeAndRefundClient();
+    }
   }
 
   function _splitTransferTokens(

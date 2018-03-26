@@ -1,7 +1,6 @@
 import BigNumber from 'bignumber.js'
+
 const assert = require('chai').assert
-const GraphGrailToken = artifacts.require('./GraphGrailToken.sol')
-const GGProject = artifacts.require('./GGProjectDebug.sol')
 
 import {
   approvalCommissionFractionThousands,
@@ -11,32 +10,39 @@ import {
   autoApprovalTimeoutSec,
 } from './ggproject-mock-data'
 
-const halfAutoApprovalTimeoutSec = (Number(autoApprovalTimeoutSec) / 2).toString()
+import {assertRevert, generateRandomAddress} from './helpers'
 
-import {assertRevert} from './helpers'
 import {
+  State,
   totalsToArrays,
   performanceToArrays,
   getContractStatus,
+  describeToMap,
 } from '../../ethereum-bridge/shared/contract-api-helpers'
 
-contract('GGProject: force finalization checks', (accounts) => {
+const GraphGrailToken = artifacts.require('./GraphGrailToken.sol')
+const GGProject = artifacts.require('./GGProjectDebug.sol')
 
-  function getAddresses() {
-    const [
-      graphGrail, client,
-      contractor_1, contractor_2,
-      contractor_3, approvalCommissionAddr,
-      disapprovalCommissionAddr, anonymous
-    ] = accounts
-    return {
-      graphGrail, client,
-      contractor_1, contractor_2,
-      contractor_3, approvalCommissionAddr,
-      disapprovalCommissionAddr, anonymous
-    }
+const halfAutoApprovalTimeoutSec = (Number(autoApprovalTimeoutSec) / 2).toString()
+
+const MAX_FORCE_FINALIZE_GAS = 2000000
+
+function getAddresses(accounts) {
+  const [
+    graphGrail, client,
+    contractor_1, contractor_2,
+    contractor_3, approvalCommissionAddr,
+    disapprovalCommissionAddr, anonymous
+  ] = accounts
+  return {
+    graphGrail, client,
+    contractor_1, contractor_2,
+    contractor_3, approvalCommissionAddr,
+    disapprovalCommissionAddr, anonymous
   }
+}
 
+contract('GGProject: force finalization', (accounts) => {
   function getMockTotals(addition = 0) {
     return {
       [addr.contractor_1]: String(1 + addition),
@@ -46,14 +52,14 @@ contract('GGProject: force finalization checks', (accounts) => {
   }
 
   async function assertNobodyCanFinalizeContract() {
-    await assertRevert(contract.forceFinalize({from: addr.graphGrail}))
-    await assertRevert(contract.forceFinalize({from: addr.client}))
-    await assertRevert(contract.forceFinalize({from: addr.contractor_1}))
-    await assertRevert(contract.forceFinalize({from: addr.contractor_2}))
-    await assertRevert(contract.forceFinalize({from: addr.contractor_3}))
-    await assertRevert(contract.forceFinalize({from: addr.approvalCommissionAddr}))
-    await assertRevert(contract.forceFinalize({from: addr.disapprovalCommissionAddr}))
-    await assertRevert(contract.forceFinalize({from: addr.anonymous}))
+    await assertRevert(contract.forceFinalize(MAX_FORCE_FINALIZE_GAS, {from: addr.graphGrail}))
+    await assertRevert(contract.forceFinalize(MAX_FORCE_FINALIZE_GAS, {from: addr.client}))
+    await assertRevert(contract.forceFinalize(MAX_FORCE_FINALIZE_GAS, {from: addr.contractor_1}))
+    await assertRevert(contract.forceFinalize(MAX_FORCE_FINALIZE_GAS, {from: addr.contractor_2}))
+    await assertRevert(contract.forceFinalize(MAX_FORCE_FINALIZE_GAS, {from: addr.contractor_3}))
+    await assertRevert(contract.forceFinalize(MAX_FORCE_FINALIZE_GAS, {from: addr.approvalCommissionAddr}))
+    await assertRevert(contract.forceFinalize(MAX_FORCE_FINALIZE_GAS, {from: addr.disapprovalCommissionAddr}))
+    await assertRevert(contract.forceFinalize(MAX_FORCE_FINALIZE_GAS, {from: addr.anonymous}))
   }
 
   function addStringsAsNumbers(a, b) {
@@ -69,7 +75,7 @@ contract('GGProject: force finalization checks', (accounts) => {
     )
   }
 
-  const addr = getAddresses()
+  const addr = getAddresses(accounts)
 
   let contract
   let token
@@ -168,12 +174,131 @@ contract('GGProject: force finalization checks', (accounts) => {
     const canForceFinalize = await contract.getCanForceFinalize()
     const hasPendingItems = await contract.hasPendingItems()
     const getCanForceFinalizeAt = await contract.getCanForceFinalizeAt()
-    await contract.forceFinalize({from: addr.anonymous})
+    await contract.forceFinalize(MAX_FORCE_FINALIZE_GAS, {from: addr.anonymous})
   })
 
   it(`canForceFinalize returns false after force finalization`, async () => {
     await contract.increaseTimeBy('200', {from: addr.anonymous})
     const canForceFinalize = await contract.getCanForceFinalize()
     assert.equal(canForceFinalize, false)
+  })
+})
+
+contract('GGProject: chunked force finalization', (accounts) => {
+
+  const addr = getAddresses(accounts)
+
+  let contract
+  let token
+  let contractorAddress
+
+  before(async () => {
+    token = await GraphGrailToken.new({from: addr.graphGrail})
+    contract = await GGProject.new(
+      token.address,
+      addr.client,
+      addr.approvalCommissionAddr,
+      addr.disapprovalCommissionAddr,
+      approvalCommissionFractionThousands,
+      disapprovalCommissionFractionThousands,
+      250, // totalWorkItems
+      1, // workItemPrice
+      autoApprovalTimeoutSec,
+      {from: addr.graphGrail}
+    )
+    await token.transfer(contract.address, new BigNumber('250'), {from: addr.graphGrail})
+    await contract.activate({from: addr.client})
+  })
+
+  it(`adding a lot of map items`, async () => {
+    let addresses = []
+    let totals = []
+
+    for (let i = 0; i < 100; ++i) {
+      addresses.push(generateRandomAddress())
+      totals.push(1)
+    }
+
+    await contract.updateTotals(addresses, totals, {from: addr.graphGrail})
+
+    addresses = []
+    totals = []
+
+    for (let i = 0; i < 100; ++i) {
+      addresses.push(generateRandomAddress())
+      totals.push(1)
+    }
+
+    await contract.updateTotals(addresses, totals, {from: addr.graphGrail})
+
+    addresses = []
+    totals = []
+
+    for (let i = 0; i < 50; ++i) {
+      addresses.push(generateRandomAddress())
+      totals.push(1)
+    }
+
+    await contract.updateTotals(addresses, totals, {from: addr.graphGrail})
+
+    // Client accepts the last item
+    const lastAddress = addresses[addresses.length - 1]
+    await contract.updatePerformance([lastAddress], [1], [0], {from: addr.client})
+
+    contractorAddress = lastAddress
+
+    const workItemsBalance = +await contract.getWorkItemsBalance()
+    assert.equal(workItemsBalance, 250 - 1)
+  })
+
+  it(`canForceFinalize returns true after the deadline`, async () => {
+    await contract.increaseTimeBy(autoApprovalTimeoutSec, {from: addr.anonymous})
+    const canForceFinalize = await contract.getCanForceFinalize()
+    assert.equal(canForceFinalize, true)
+  })
+
+  it(`forceFinalize transfers contract to ForceFinalizing state and accepts the first ` +
+    `items chunk`, async () => {
+
+    await contract.forceFinalize(MAX_FORCE_FINALIZE_GAS, {from: addr.anonymous})
+
+    const [state, numPendingItems, workItemsBalance] = await Promise.all([
+      contract.state(),
+      contract.getNumPendingItems(),
+      contract.getWorkItemsBalance(),
+    ])
+
+    assert.equal(+state, State.ForceFinalizing, `state`)
+  })
+
+  it(`prohibits to run activate(), finalize(), updateTotals() and updatePerformance() ` +
+    `from ForceFinalizing state`, async () => {
+    await assertRevert(contract.activate({from: addr.client}))
+    await assertRevert(contract.updateTotals([contractorAddress], [2], {from: addr.graphGrail}))
+    await assertRevert(contract.updatePerformance([contractorAddress], [1], [0], {from: addr.client}))
+    await assertRevert(contract.finalize({from: addr.client}))
+  })
+
+  it(`calling forceFinalize multiple times accepts all pending items and transfers contract ` +
+    `to Finalized state`, async () => {
+
+    let state = +await contract.state()
+    let i = 0
+
+    while (state != State.Finalized) {
+      if (++i >= 10) {
+        assert.ok(false, `failed to finalize in 5 calls to forceFinalize()`)
+      }
+      await contract.forceFinalize(MAX_FORCE_FINALIZE_GAS, {from: addr.anonymous})
+      state = +await contract.state()
+    }
+
+    const [numPendingItems, workItemsBalance] = await Promise.all([
+      contract.getNumPendingItems(),
+      contract.getWorkItemsBalance(),
+    ])
+
+    assert.equal(+numPendingItems, 0, `numPendingItems`)
+    assert.equal(+workItemsBalance, 0, `workItemsBalance`)
   })
 })

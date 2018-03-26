@@ -1,4 +1,5 @@
 import chai from 'chai'
+import generate from 'nanoid/generate'
 
 const assert = chai.assert
 
@@ -14,4 +15,10 @@ export async function assertRevert(promise, message) {
 
 assert.bignumEqual = function assertBignumEqual(bal1, bal2, message) {
   assert.equal(bal1.toString(), bal2.toString(), message)
+}
+
+const APLHABET = '0123456789abcdef'
+
+export function generateRandomAddress() {
+  return '0x' + generate(APLHABET, 40)
 }

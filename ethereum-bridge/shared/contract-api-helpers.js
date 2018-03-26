@@ -1,16 +1,18 @@
 export const State = {
   New: 0,
   Active: 1,
-  Finalized: 2,
+  ForceFinalizing: 2,
+  Finalized: 3,
 }
 
 State.stringify = stateToString
 
 export function stateToString(state) {
   switch (state) {
-    case 0: return 'New'
-    case 1: return 'Active'
-    case 2: return 'Finalized'
+    case 0: return 'NEW'
+    case 1: return 'ACTIVE'
+    case 2: return 'FORCE_FINALIZING'
+    case 3: return 'FINALIZED'
     default: throw new Error(`Invalid contract state: ${state}`)
   }
 }

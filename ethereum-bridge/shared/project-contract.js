@@ -15,6 +15,8 @@ import compareAddress from './utils/compare-address'
 import builtProjectContract from '../../truffle/build/contracts/GGProject.json'
 
 
+const MAX_FORCE_FINALIZE_GAS = 2000000
+
 export default class ProjectContract extends BaseContract {
   static builtContract = builtProjectContract
 
@@ -99,11 +101,15 @@ export default class ProjectContract extends BaseContract {
 
   async forceFinalize() {
     const {state, canForceFinalize} = await this.describe()
+    this.validateForceFinalizability(state, canForceFinalize)
 
-    this.validateContractState(State.Active, state)
-    this.validateForceFinalizability(canForceFinalize)
+    let newState = state
 
-    return this._callContractMethod('forceFinalize')
+    while (newState !== State.Finalized) {
+      console.log(`calling forceFinalize...`)
+      await this._callContractMethod('forceFinalize', [MAX_FORCE_FINALIZE_GAS])
+      newState = +await this.truffleContract.state()
+    }
   }
 
   validateAuthorized = (address) => {
@@ -169,7 +175,14 @@ export default class ProjectContract extends BaseContract {
     }
   }
 
-  validateForceFinalizability = (canForceFinalize) => {
+  validateForceFinalizability = (state, canForceFinalize) => {
+    if (state !== State.Active && state !== State.ForceFinalizing) {
+      throw new UserError(
+        `You can only force-finalize contract in ACTIVE or FORCE_FINALIZING state, ` +
+          `current state: ${stateToString(state)}`,
+        ErrorCodes.INVALID_CONTRACT_STATE
+      )
+    }
     if (!canForceFinalize) {
       throw new UserError(`Contract couldn't be force-finalized`, ErrorCodes.INVALID_CONTRACT_STATE)
     }

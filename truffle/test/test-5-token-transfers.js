@@ -399,7 +399,7 @@ contract('GGProject: force finalization token transfers', (accounts) => {
 
     assert.ok(canForceFinalize, `can force finalize`)
 
-    await contract.forceFinalize({from: addr.graphGrail})
+    await contract.forceFinalize(2000000, {from: addr.graphGrail})
     const bal = await getBalances(contract, token, addr)
 
     // was:

@@ -158,7 +158,7 @@ router.get('/api/contract-status/:address', async ctx => {
   const {state, performance, ...other} = await contract.describe()
 
   ctx.body = {
-    state: ProjectContract.State.stringify(state).toUpperCase(),
+    state: ProjectContract.State.stringify(state),
     workers: performance,
     ...other,
   }

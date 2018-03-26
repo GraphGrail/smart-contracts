@@ -1,3 +1,4 @@
+import BigNumber from 'bignumber.js'
 import BaseContract from './base-contract'
 import {inspectTransaction} from './utils/tx-utils'
 
@@ -19,7 +20,12 @@ export default class ProjectContract extends BaseContract {
   }
 
   async transfer(to, value) {
-    // TODO: check basic preconditions
+    const tokenBalance = await this.balanceOf(this.account)
+
+    if (tokenBalance.lt(new BigNumber(value))) {
+      throw new UserError(`Wanted to send ${value} tokens to ${to}, but have only ${tokenBalance} `
+        +`at current address ${this.account}`, ErrorCodes.INSUFFICIENT_TOKEN_BALANCE)
+    }
 
     const result = await this._callContractMethod('transfer', [to, value])
 

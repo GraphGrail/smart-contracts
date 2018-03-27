@@ -36,23 +36,23 @@ export default class ProjectContract extends BaseContract {
   ) {
     if (approvalCommissionFraction < 0 || approvalCommissionFraction > 1) {
       throw new UserError(
-        error: `approvalCommissionFraction must be between 0 and 1, inclusive`,
-        code: ErrorCodes.INVALID_DATA,
+        `approvalCommissionFraction must be between 0 and 1, inclusive`,
+        ErrorCodes.INVALID_DATA,
       )
     }
 
     if (disapprovalCommissionFraction < 0 || disapprovalCommissionFraction > 1) {
       throw new UserError(
-        error: `disapprovalCommissionFraction must be between 0 and 1, inclusive`,
-        code: ErrorCodes.INVALID_DATA,
+        `disapprovalCommissionFraction must be between 0 and 1, inclusive`,
+        ErrorCodes.INVALID_DATA,
       )
     }
 
     if (approvalCommissionFraction + disapprovalCommissionFraction > 1) {
       throw new UserError(
-        error: `sum of approvalCommissionFraction and disapprovalCommissionFraction ` +
+        `sum of approvalCommissionFraction and disapprovalCommissionFraction ` +
           `cannot be more than 1`,
-        code: ErrorCodes.INVALID_DATA,
+        ErrorCodes.INVALID_DATA,
       )
     }
 

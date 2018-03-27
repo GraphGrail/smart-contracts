@@ -1,3 +1,4 @@
+import nanoid from 'nanoid'
 import Pino from 'pino'
 let pino
 
@@ -82,7 +83,10 @@ export default class BaseContract {
       )
     }
 
+    const txId = nanoid()
+
     pino.info({
+      txId: txId,
       contractName: this.TruffleCls.contractName,
       args: args,
       from: account,
@@ -97,6 +101,7 @@ export default class BaseContract {
     }).then(x => x)
 
     pino.info({
+      txId: txId,
       contractName: this.TruffleCls.contractName,
       address: truffleContract.address,
     }, 'contract deployed')
@@ -178,7 +183,10 @@ export default class BaseContract {
       value: value,
     }
 
+    const txId = nanoid()
+
     pino.info({
+      txId: txId,
       methodName: methodName,
       contractAddress: this.address,
       args: args,
@@ -199,10 +207,12 @@ export default class BaseContract {
     }
 
     pino.info({
+      txId: txId,
       methodName: methodName,
       contractAddress: this.address,
-      ...txResult,
-    }, 'tx sended')
+      txHash: txResult.tx,
+      gasUsed: txResult.receipt.gasUsed,
+    }, 'tx sent')
 
     return await assertTxSucceeds(txResult)
   }

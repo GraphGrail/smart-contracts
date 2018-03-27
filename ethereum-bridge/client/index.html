@@ -7,50 +7,6 @@
   </head>
   <body>
     <div id="app" style="display: flex; flex-wrap: wrap; align-items: flex-start;">
-      <input id='first' placeholder='first param'/>
-      <input id='second' placeholder='second param'/>
-      <input id='third' placeholder='third param'/>
     </div>
-    <script>
-      window.onload = function() {
-        var app = document.querySelector('#app')
-        var tokenContractAddress = '0x436e362ac2c1d5f88986b7553395746446922be2'
-        var someOtherAddress = '0x1234143211234143211234143211234143211112'
-        var contractAddress = '0x1234143211234143211234143211234143211113'
-        var workerAddress = '0x1234143211234143211234143211234143211114'
-        var workers = {}
-        workers[workerAddress] = 1
-        var params = {
-          init: [tokenContractAddress, 1337, 'http://localhost:3000/api'],
-          transferTokensTo: ['0x1234143211234143211234143211234143211112', '1'],
-          activateContract: [contractAddress],
-          scoreWork: [contractAddress, workers],
-          finalizeContract: [contractAddress],
-        }
-        function getParams(key) {
-          var first = document.querySelector('#first')
-          var second = document.querySelector('#second')
-          var third = document.querySelector('#third')
-          return first.value ? [first.value, second.value, third.value] : null
-        }
-        Object.keys(window.graphGrailEther).forEach(function(key){
-          var actionButton = document.createElement('BUTTON')
-          actionButton.id = key
-          actionButton.innerText = key
-          actionButton.addEventListener('click', function() {
-            console.info('calling '+key, ...(params[key] || []))
-            var keyRes = window.graphGrailEther[key](...(getParams(key) || params[key] || []))
-            if (keyRes.then) {
-              keyRes.then(res => console.info('graphGrailEther.'+key, res))
-            } else {
-              console.info('graphGrailEther.'+key, keyRes)
-            }
-          })
-          app.appendChild(actionButton)
-        })
-
-        window.graphGrailEther.init(tokenContractAddress, 1337)
-      }
-    </script>
   </body>
 </html>

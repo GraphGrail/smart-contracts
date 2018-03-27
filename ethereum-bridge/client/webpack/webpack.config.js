@@ -1,7 +1,6 @@
 var webpack = require('webpack')
 var autoprefixer = require('autoprefixer')
 var ExtractTextPlugin = require('extract-text-webpack-plugin')
-var InterpolateHtmlPlugin = require('react-dev-utils/InterpolateHtmlPlugin')
 var HtmlWebpackPlugin = require('html-webpack-plugin')
 var ManifestPlugin = require('webpack-manifest-plugin')
 var rimraf = require('rimraf')
@@ -43,6 +42,8 @@ module.exports = {
     path: options.paths.output,
     publicPath: options.publicUrl,
     pathinfo: options.dev,
+    libraryTarget: 'umd',
+    library: 'graphGrailEther',
   },
 
   resolve: {
@@ -56,70 +57,16 @@ module.exports = {
 
   module: {
     rules: [
-      { test: /\.jsx?$/,
+      { test: /\.js$/,
         exclude: /node_modules(?![/]ethereum-address)/,
         use: [
           { loader: 'babel-loader' },
         ],
       },
-      { test: /\.s[ca]ss$/,
-        use: styleLoader([
-          { loader: 'css-loader', options: {
-            sourceMap: true,
-            minimize: options.uglify,
-          }},
-          postcssLoader(),
-          { loader: 'resolve-url-loader', options: {
-            root: options.paths.context,
-            debug: false,
-            keepQuery: true,
-            sourceMap: true,
-          }},
-          { loader: 'sass-loader', options: {
-            sourceMap: true,
-          }},
-        ])
-      },
-      { test: /\.css$/,
-        use: styleLoader([
-          { loader: 'css-loader', options: {
-            sourceMap: true,
-            minimize: options.uglify,
-            importLoaders: 1,
-          }},
-          postcssLoader(),
-        ]),
-      },
-      { test: /\.svg$/,
-        use: [
-          { loader: 'file-loader', options: {
-            name: 'media/[name].[hash:8].[ext]'
-          }},
-        ],
-      },
-      { test: /\.ico$/,
-        use: [
-          { loader: 'file-loader', options: {
-            name: '[name].[ext]'
-          }},
-        ],
-      },
-      { exclude: [/\.(html|jsx?|css|s[ca]ss|json|svg|ico)$/],
-        use: [{
-          loader: 'url-loader',
-          options: {
-            limit: 10000,
-            name: 'media/[name].[hash:8].[ext]',
-          },
-        }],
-      },
     ],
   },
 
   plugins: skipFalsy([
-    new InterpolateHtmlPlugin({
-      PUBLIC_URL: options.publicUrl.replace(/[/]$/, '')
-    }),
 
     new HtmlWebpackPlugin({
       inject: true,
@@ -139,11 +86,6 @@ module.exports = {
     }),
 
     new webpack.DefinePlugin(options.env),
-
-    !options.isDevServer && new ExtractTextPlugin({
-      filename: '[name].[contenthash:8].css',
-      allChunks: true,
-    }),
 
     options.uglify && new webpack.optimize.UglifyJsPlugin({
       compress: {
@@ -196,33 +138,6 @@ module.exports = {
     stats: 'minimal',
   },
 }
-
-
-function postcssLoader() {
-  return {
-    loader: 'postcss-loader',
-    options: {
-      plugins: [
-        autoprefixer({
-          browsers: ['>1%', 'last 4 versions', 'Firefox ESR', 'not ie < 9']
-          // React doesn't support IE8 anyway
-        })
-      ]
-    }
-  }
-}
-
-
-function styleLoader(loaders) {
-  if (options.isDevServer) {
-    return [{ loader: 'style-loader' }].concat(loaders)
-  }
-  return ExtractTextPlugin.extract({
-    fallback: 'style-loader',
-    use: loaders,
-  })
-}
-
 
 function skipFalsy(array) {
   return array.filter(item => !!item)

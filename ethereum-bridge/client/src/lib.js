@@ -10,20 +10,6 @@ import {getConnection, setWeb3Promise} from '../../shared/utils/connection'
 
 import getWeb3 from './utils/get-web3'
 
-export default {
-  init,
-  isInitialized,
-  getClientAddress,
-  checkBalances,
-  isTransacting,
-  activeTransactionFinishedPromise,
-  transferTokensTo,
-  activateContract,
-  scoreWork,
-  finalizeContract,
-  UserError,
-}
-
 BigNumber.config({EXPONENTIAL_AT: [-7, 30]})
 
 const RESOLVED_PROMISE = new Promise(resolve => resolve())
@@ -32,7 +18,9 @@ let isInitializing = false
 let moduleIsInitialized = false
 let tokenContract
 
-async function init(tokenContractAddress, expectedNetworkId = 4, internalApiAddress = null) {
+export {UserError, BigNumber}
+
+export async function init(tokenContractAddress, expectedNetworkId = 4, internalApiAddress = null) {
   if (isInitializing || moduleIsInitialized) {
     throw new UserError(`Already initialized`, ErrorCodes.ALREADY_INITIALIZED)
   }
@@ -86,7 +74,7 @@ async function _init(tokenContractAddress, expectedNetworkId) {
   return account
 }
 
-function isInitialized() {
+export function isInitialized() {
   return isInitializing || moduleIsInitialized
 }
 
@@ -96,13 +84,13 @@ function assertInitialized() {
   }
 }
 
-async function getClientAddress() {
+export async function getClientAddress() {
   assertInitialized()
   const {account} = await getConnection()
   return account
 }
 
-async function checkBalances(address) {
+export async function checkBalances(address) {
   assertInitialized()
   const {web3, account} = await getConnection()
   const [etherBigNumber, tokenBigNumber] = await Promise.all([
@@ -115,30 +103,30 @@ async function checkBalances(address) {
   }
 }
 
-function isTransacting() {
+export function isTransacting() {
   assertInitialized()
   return false
 }
 
-function activeTransactionFinishedPromise() {
+export function activeTransactionFinishedPromise() {
   assertInitialized()
   return RESOLVED_PROMISE
 }
 
-async function transferTokensTo(address, amount) {
+export async function transferTokensTo(address, amount) {
   assertInitialized()
   await tokenContract.transfer(address, amount)
   return
 }
 
-async function activateContract(contractAddress) {
+export async function activateContract(contractAddress) {
   assertInitialized()
   const project = await ProjectContract.at(contractAddress)
   await project.activate()
   return
 }
 
-async function scoreWork(contractAddress, workers) {
+export async function scoreWork(contractAddress, workers) {
   assertInitialized()
   validateWorkersData(workers)
   const project = await ProjectContract.at(contractAddress)
@@ -146,7 +134,7 @@ async function scoreWork(contractAddress, workers) {
   return
 }
 
-async function finalizeContract(contractAddress) {
+export async function finalizeContract(contractAddress) {
   assertInitialized()
   const project = await ProjectContract.at(contractAddress)
   await project.finalize()

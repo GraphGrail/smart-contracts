@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "start": "webpack-dev-server --config webpack/webpack.config.js --env.appDir .",
+    "build": "webpack --config webpack/webpack.config.js --env.appDir .",
     "test": "echo \"Error: no test specified\" && exit 1",
     "precommit": "npm run fix",
     "fix": "prettier --write --list-different 'src/**/*.js' || true"

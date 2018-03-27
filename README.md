@@ -25,6 +25,10 @@ cd <project-root>
 ./install-deps.sh
 ```
 
+## Building frontend library
+
+Frontend library is built with webpack. To start development server, run `npm start` command in `ethereum-bridge/client` folder. To build production version of the library, run  `npm run-script build` in the same folder and check up `ethereum-bridge/client/build` folder for results.
+
 ## Running tests with TestRPC
 
 GraphGrail escrow smart contract has a test suite. To run it against TestRPC virtual blockchain just run `npm test`:

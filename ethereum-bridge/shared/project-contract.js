@@ -18,8 +18,6 @@ import builtProjectContract from '../../truffle/build/contracts/GGProject.json'
 
 const MAX_FORCE_FINALIZE_GAS = 2000000
 
-// TODO: use standard class function declaration instead of class prop + arrow
-//
 export default class ProjectContract extends BaseContract {
   static builtContract = builtProjectContract
 
@@ -63,11 +61,9 @@ export default class ProjectContract extends BaseContract {
 
   async activate() {
     const {tokenBalance, totalWorkItems, workItemPrice, state, client} = await this.describe()
-
-    // FIXME: here, multiplying BigNumber with a Number will overflow Number
-    this.validateActivationTokenBalance(totalWorkItems * workItemPrice, tokenBalance)
-    this.validateContractState(State.New, state)
-    this.validateAuthorized(client)
+    this.assertActivationTokenBalance(workItemPrice.mul(totalWorkItems), tokenBalance)
+    this.assertContractStateIs(State.New, state)
+    this.assertActorIs(client)
 
     return this._callContractMethod('activate')
   }
@@ -75,8 +71,8 @@ export default class ProjectContract extends BaseContract {
   async updateTotals(totalsMap) {
     const {state, owner} = await this.describe()
 
-    this.validateAuthorized(owner)
-    this.validateContractState(State.Active, state)
+    this.assertActorIs(owner)
+    this.assertContractStateIs(State.Active, state)
 
     const {addresses, totals} = totalsToArrays(totalsMap)
     return this._callContractMethod('updateTotals', [addresses, totals], {from: this.account})
@@ -86,9 +82,9 @@ export default class ProjectContract extends BaseContract {
     const [{state, client}, currentPerformanceMap] = await Promise.all([this.describe(),
       this.getPerformance()])
 
-    this.validateContractState(State.Active, state)
-    this.validateAuthorized(client)
-    this.validatePerformanceUpdate(currentPerformanceMap, performanceUpdate)
+    this.assertContractStateIs(State.Active, state)
+    this.assertActorIs(client)
+    this.assertPerformanceUpdateIsValid(currentPerformanceMap, performanceUpdate)
 
     const {addresses, approved, declined} = performanceToArrays(performanceUpdate)
     return this._callContractMethod(
@@ -101,16 +97,16 @@ export default class ProjectContract extends BaseContract {
   async finalize() {
     const {state, client, canFinalize} = await this.describe()
 
-    this.validateContractState(State.Active, state)
-    this.validateAuthorized(client)
-    this.validateFinalizability(canFinalize)
+    this.assertContractStateIs(State.Active, state)
+    this.assertActorIs(client)
+    this.assertCanFinalize(canFinalize)
 
     return this._callContractMethod('finalize')
   }
 
   async forceFinalize() {
     const {state, canForceFinalize} = await this.describe()
-    this.validateForceFinalizability(state, canForceFinalize)
+    this.assertCanForceFinalize(state, canForceFinalize)
 
     let newState = state
 
@@ -120,8 +116,7 @@ export default class ProjectContract extends BaseContract {
     }
   }
 
-  // FIXME: rename to assertActorIs(address)
-  validateAuthorized = (address) => {
+  assertActorIs(address) {
     if (!compareAddress(address, this.account)) {
       throw new UserError(
         `Only authorized address for action is ${address}, but you're running as ${this.account} now`,
@@ -131,7 +126,7 @@ export default class ProjectContract extends BaseContract {
     return
   }
 
-  validateContractState = (expected, fact) => {
+  assertContractStateIs(expected, fact) {
     if (expected !== fact) {
       throw new UserError(
         `Contract should be in ${stateToString(expected)} state, but is in `
@@ -141,17 +136,16 @@ export default class ProjectContract extends BaseContract {
     }
   }
 
-  validateActivationTokenBalance = (requiredBalance, factBalance) => {
-    // FIXME: requiredBalance and factBalance may be BigNumber's and < operator won't work for them
-    if (factBalance < requiredBalance) {
+  assertActivationTokenBalance(requiredBalance, factBalance) {
+    if (factBalance.lt(requiredBalance)) {
       throw new UserError(
-        `Contract needs ${requiredBalance} tokens to be activated, but has only ${factBalance}`,
+        `Failed to activate contract; need ${requiredBalance} tokens, have ${factBalance}`,
         ErrorCodes.INSUFFICIENT_TOKEN_BALANCE
       )
     }
   }
 
-  validatePerformanceUpdate = (currentPerformanceData, update) => {
+  assertPerformanceUpdateIsValid(currentPerformanceData, update) {
     Object.keys(update).forEach(updateItemAddress => {
       const existingItem = currentPerformanceData[updateItemAddress]
       if (!existingItem) {
@@ -180,15 +174,14 @@ export default class ProjectContract extends BaseContract {
     return
   }
 
-  // FIXME: rename to assertCanFinalize
-  validateFinalizability = (canFinalize) => {
+  assertCanFinalize(canFinalize) {
     if (!canFinalize) {
-      throw new UserError(`Contract has pending work and couldn't be finalized`, ErrorCodes.INVALID_CONTRACT_STATE)
+      throw new UserError(`Contract has pending work and couldn't be finalized`,
+        ErrorCodes.INVALID_CONTRACT_STATE)
     }
   }
 
-  // FIXME: rename to assertCanForceFinalize
-  validateForceFinalizability = (state, canForceFinalize) => {
+  assertCanForceFinalize(state, canForceFinalize) {
     if (state !== State.Active && state !== State.ForceFinalizing) {
       throw new UserError(
         `You can only force-finalize contract in ACTIVE or FORCE_FINALIZING state, ` +

@@ -27,7 +27,7 @@ cd <project-root>
 
 ## Building frontend library
 
-Frontend library is built with webpack. To start development server, run `npm start` command in `ethereum-bridge/client` folder. To build production version of the library, run  `npm run-script build` in the same folder and check up `ethereum-bridge/client/build` folder for results.
+Frontend library is built with webpack. To start development server, run `npm start` command in `ethereum-bridge/client` folder. To build production version of the library, run  `npm run build` in the same folder and check up `ethereum-bridge/client/build` folder for results.
 
 ## Running tests with TestRPC
 

@@ -128,7 +128,7 @@ export default class ProjectContract extends BaseContract {
     const {addresses, approved, declined} = performanceToArrays(performanceUpdate)
 
     const [addressesChunks, approvedChunks, declinedChunks] = splitToChunks(
-      UPDATE_TOTALS_CHUNK_SIZE,
+      UPDATE_PERFORMANCE_CHUNK_SIZE,
       [addresses, approved, declined])
 
     // NOTE: not parallelizing here as this is intended to be called by a client,

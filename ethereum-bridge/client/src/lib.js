@@ -54,10 +54,14 @@ async function _init(tokenContractAddress, expectedNetworkId) {
     )
   }
 
-  tokenContract = await TokenContract.at(tokenContractAddress)
-
-  // TODO: check that it doesn't throw when no Ethereum client found
-  const {web3, networkId, account} = await getConnection()
+  let networkId, account
+  try {
+    const connection = await getConnection()
+    networkId = connection.networkId
+    account = connection.account
+  } catch (err) {
+    throw UserError.from(err, `no Ethereum client found`, ErrorCodes.NO_ETHEREUM_CLIENT)
+  }
 
   if (!networkId) {
     throw new UserError(`no Ethereum client found`, ErrorCodes.NO_ETHEREUM_CLIENT)
@@ -73,6 +77,8 @@ async function _init(tokenContractAddress, expectedNetworkId) {
       ErrorCodes.WRONG_NETWORK,
     )
   }
+
+  tokenContract = await TokenContract.at(tokenContractAddress)
 
   return account
 }
@@ -124,8 +130,6 @@ async function transferTokensTo(address, amount) {
 
 async function activateContract(contractAddress) {
   assertInitialized()
-  // TODO: check that it's a ProjectContract
-  // TODO: check that client is the contract-specified one
   const project = await ProjectContract.at(contractAddress)
   await project.activate()
   return

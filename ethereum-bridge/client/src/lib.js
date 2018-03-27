@@ -1,3 +1,4 @@
+import BigNumber from 'bignumber.js'
 import ethereumAddress from 'ethereum-address'
 
 import TokenContract from '../../shared/token-contract'
@@ -22,6 +23,8 @@ export default {
   finalizeContract,
   UserError,
 }
+
+BigNumber.config({EXPONENTIAL_AT: [-7, 30]})
 
 const RESOLVED_PROMISE = new Promise(resolve => resolve())
 

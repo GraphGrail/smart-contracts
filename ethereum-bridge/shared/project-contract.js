@@ -1,4 +1,7 @@
+import splitToChunks from './utils/split-to-chunks'
+
 import BaseContract from './base-contract'
+
 import {UserError} from './errors'
 import * as ErrorCodes from './error-codes'
 
@@ -17,6 +20,9 @@ import builtProjectContract from '../../truffle/build/contracts/GGProject.json'
 
 
 const MAX_FORCE_FINALIZE_GAS = 2000000
+const UPDATE_TOTALS_CHUNK_SIZE = 20
+const UPDATE_PERFORMANCE_CHUNK_SIZE = 20
+
 
 export default class ProjectContract extends BaseContract {
   static builtContract = builtProjectContract
@@ -97,7 +103,18 @@ export default class ProjectContract extends BaseContract {
     this.assertContractStateIs(State.Active, state)
 
     const {addresses, totals} = totalsToArrays(totalsMap)
-    return this._callContractMethod('updateTotals', [addresses, totals], {from: this.account})
+
+    const [addressesChunks, totalsChunks] = splitToChunks(
+      UPDATE_TOTALS_CHUNK_SIZE,
+      [addresses, totals])
+
+    const txPromises = addressesChunks.map((addresses, i) => this._callContractMethod(
+      'updateTotals',
+      [addresses, totalsChunks[i]],
+      {from: this.account}
+    ))
+
+    return await Promise.all(txPromises)
   }
 
   async updatePerformance(performanceUpdate) {
@@ -109,11 +126,27 @@ export default class ProjectContract extends BaseContract {
     this.assertPerformanceUpdateIsValid(currentPerformanceMap, performanceUpdate)
 
     const {addresses, approved, declined} = performanceToArrays(performanceUpdate)
-    return this._callContractMethod(
-      'updatePerformance',
-      [addresses, approved, declined],
-      {from: this.account}
-    )
+
+    const [addressesChunks, approvedChunks, declinedChunks] = splitToChunks(
+      UPDATE_TOTALS_CHUNK_SIZE,
+      [addresses, approved, declined])
+
+    // NOTE: not parallelizing here as this is intended to be called by a client,
+    // and it would be a bad UX to ask signing a lot of transactions at once.
+
+    let txResults = []
+
+    for (let i = 0; i < addressesChunks.length; ++i) {
+      console.log(`calling updatePerformance`, addressesChunks[i], approvedChunks[i], declinedChunks[i])
+      const result = await this._callContractMethod(
+        'updatePerformance',
+        [addressesChunks[i], approvedChunks[i], declinedChunks[i]],
+        {from: this.account}
+      )
+      txResults.push(result)
+    }
+
+    return txResults
   }
 
   async finalize() {

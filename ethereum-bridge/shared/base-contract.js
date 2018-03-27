@@ -1,3 +1,14 @@
+import Pino from 'pino'
+let pino
+
+// initialize pino logger for node only
+if (typeof window !== 'object') {
+  pino = Pino()
+} else {
+  pino = {}
+  pino.info = () => {}
+}
+
 import BigNumber from 'bignumber.js'
 import TruffleContract from 'truffle-contract'
 
@@ -8,14 +19,6 @@ import {assertTxSucceeds} from './utils/tx-utils'
 
 import {UserError} from './errors'
 import * as ErrorCodes from './error-codes'
-
-
-// Fail if tx is going to take more gas than this.
-//
-// TODO: get from connection
-//
-const GAS_HARD_LIMIT = 4700000
-
 
 export default class BaseContract {
 
@@ -79,11 +82,24 @@ export default class BaseContract {
       )
     }
 
+    pino.info({
+      contractName: this.TruffleCls.contractName,
+      args: args,
+      from: account,
+      gas: Math.min(gasEstimation + 20000, blockGasLimit),
+      gasPrice: gasPrice,
+    }, 'will deploy contract')
+
     const truffleContract = await this.TruffleCls.new(...args, {
       from: account,
       gas: Math.min(gasEstimation + 20000, blockGasLimit),
       gasPrice,
     }).then(x => x)
+
+    pino.info({
+      contractName: this.TruffleCls.contractName,
+      address: truffleContract.address,
+    }, 'contract deployed')
 
     return new this(this.connection, truffleContract)
   }
@@ -162,6 +178,13 @@ export default class BaseContract {
       value: value,
     }
 
+    pino.info({
+      methodName: methodName,
+      contractAddress: this.address,
+      args: args,
+      ...txOpts,
+    }, 'will send tx')
+
     const txArgs = args ? [...args, txOpts] : [txOpts]
     let txResult
 
@@ -174,6 +197,12 @@ export default class BaseContract {
         throw err
       }
     }
+
+    pino.info({
+      methodName: methodName,
+      contractAddress: this.address,
+      ...txResult,
+    }, 'tx sended')
 
     return await assertTxSucceeds(txResult)
   }

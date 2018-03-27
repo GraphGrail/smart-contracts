@@ -11,8 +11,9 @@
     "babel-register": "^6.26.0",
     "bignumber.js": "git+https://github.com/frozeman/bignumber.js-nolookahead.git",
     "ethereum-address": "0.0.4",
-    "truffle-contract": "^3.0.4",
     "keccak": "^1.4.0",
+    "pino": "^4.15.0",
+    "truffle-contract": "^3.0.4",
     "web3": "^0.20.6"
   },
   "devDependencies": {

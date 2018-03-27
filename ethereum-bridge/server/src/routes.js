@@ -34,7 +34,11 @@ const router = KoaRouter()
 const koaBody = KoaBody()
 
 function logRequest(ctx) {
-  ctx.log.info({params: ctx.params, query: ctx.request.query}, 'new request')
+  ctx.log.info({
+    params: ctx.params,
+    query: ctx.request.query,
+    body: ctx.request.body},
+    'new request')
 }
 
 function logResponse(ctx, json) {

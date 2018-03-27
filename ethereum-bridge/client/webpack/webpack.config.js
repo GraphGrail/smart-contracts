@@ -1,8 +1,5 @@
 var webpack = require('webpack')
-var autoprefixer = require('autoprefixer')
-var ExtractTextPlugin = require('extract-text-webpack-plugin')
 var HtmlWebpackPlugin = require('html-webpack-plugin')
-var ManifestPlugin = require('webpack-manifest-plugin')
 var rimraf = require('rimraf')
 var path = require('path')
 
@@ -18,10 +15,7 @@ module.exports = {
   context: options.paths.context,
 
   entry: {
-    main: skipFalsy([
-      options.isDevServer && 'react-hot-loader/patch',
-      // activate HMR for React
-
+    'graph-grail-ether': skipFalsy([
       options.isDevServer && ('webpack-dev-server/client?http://localhost:' + options.devServerPort),
       // bundle the client for webpack-dev-server
       // and connect to the provided endpoint
@@ -68,7 +62,7 @@ module.exports = {
 
   plugins: skipFalsy([
 
-    new HtmlWebpackPlugin({
+    options.isDevServer && new HtmlWebpackPlugin({
       inject: true,
       template: options.paths.indexHtml,
       minify: !options.uglify ? undefined : {
@@ -86,10 +80,6 @@ module.exports = {
     }),
 
     new webpack.DefinePlugin(options.env),
-
-    !options.isDevServer && new ManifestPlugin({
-      fileName: 'asset-manifest.json'
-    }),
 
     options.isDevServer && new webpack.HotModuleReplacementPlugin(),
     // enable HMR globally

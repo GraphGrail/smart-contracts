@@ -112,8 +112,8 @@ router.post('/api/deploy-contract', koaBody, ctx => {
     payload.clientAddress, // clientAddress, equals ownerAddress here
     payload.approvalCommissionBenificiaryAddress, // approvalCommissionBenificiaryAddress
     payload.disapprovalCommissionBeneficiaryAddress, // disapprovalCommissionBeneficiaryAddress
-    payload.approvalCommissionFractionThousands, // approvalCommissionFractionThousands
-    payload.disapprovalCommissionFractionThousands, // disapprovalCommissionFractionThousands
+    payload.approvalCommissionFraction, // approvalCommissionFraction
+    payload.disapprovalCommissionFraction, // disapprovalCommissionFraction
     payload.totalWorkItems, // totalWorkItems
     payload.workItemPrice, // workItemPrice
     payload.autoApprovalTimeoutSec // autoApprovalTimeoutSec

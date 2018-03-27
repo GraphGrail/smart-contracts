@@ -20,7 +20,7 @@ let tokenContract
 
 export {UserError, BigNumber}
 
-export async function init(tokenContractAddress, expectedNetworkId = 4, internalApiAddress = null) {
+export async function init(tokenContractAddress, expectedNetworkId = 4) {
   if (isInitializing || moduleIsInitialized) {
     throw new UserError(`Already initialized`, ErrorCodes.ALREADY_INITIALIZED)
   }
@@ -29,7 +29,7 @@ export async function init(tokenContractAddress, expectedNetworkId = 4, internal
 
   try {
     isInitializing = true
-    const clientAddress = await _init(tokenContractAddress, expectedNetworkId, internalApiAddress)
+    const clientAddress = await _init(tokenContractAddress, expectedNetworkId)
     moduleIsInitialized = true
     return clientAddress
   } finally {

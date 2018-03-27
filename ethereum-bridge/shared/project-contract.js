@@ -6,6 +6,7 @@ import {
   State as State,
   stateToString,
   getContractStatus,
+  getContractPerformance,
   totalsToArrays,
   performanceToArrays,
 } from './contract-api-helpers'
@@ -56,8 +57,11 @@ export default class ProjectContract extends BaseContract {
     return await getContractStatus(this.truffleContract)
   }
 
+  async getPerformance() {
+    return await getContractPerformance(this.truffleContract)
+  }
+
   async activate() {
-    // TODO: use helper that doesn't request whole performance map
     const {tokenBalance, totalWorkItems, workItemPrice, state, client} = await this.describe()
 
     // FIXME: here, multiplying BigNumber with a Number will overflow Number
@@ -69,7 +73,7 @@ export default class ProjectContract extends BaseContract {
   }
 
   async updateTotals(totalsMap) {
-    const {state, owner, performance} = await this.describe()
+    const {state, owner} = await this.describe()
 
     this.validateAuthorized(owner)
     this.validateContractState(State.Active, state)
@@ -79,7 +83,8 @@ export default class ProjectContract extends BaseContract {
   }
 
   async updatePerformance(performanceUpdate) {
-    const {state, client, performance: currentPerformanceMap} = await this.describe()
+    const [{state, client}, currentPerformanceMap] = await Promise.all([this.describe(),
+      this.getPerformance()])
 
     this.validateContractState(State.Active, state)
     this.validateAuthorized(client)
@@ -94,7 +99,6 @@ export default class ProjectContract extends BaseContract {
   }
 
   async finalize() {
-    // TODO: use helper that doesn't request whole performance map
     const {state, client, canFinalize} = await this.describe()
 
     this.validateContractState(State.Active, state)
@@ -105,7 +109,6 @@ export default class ProjectContract extends BaseContract {
   }
 
   async forceFinalize() {
-    // TODO: use helper that doesn't request whole performance map
     const {state, canForceFinalize} = await this.describe()
     this.validateForceFinalizability(state, canForceFinalize)
 

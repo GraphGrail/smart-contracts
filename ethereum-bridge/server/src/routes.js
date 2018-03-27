@@ -169,7 +169,8 @@ router.get('/api/contract-status/:address', async ctx => {
     }
   }
 
-  const {state, performance, ...other} = await contract.describe()
+  const [{state, ...other}, performance] = await Promise.all([contract.describe(),
+    contract.getPerformance()])
 
   ctx.body = {
     state: ProjectContract.State.stringify(state),

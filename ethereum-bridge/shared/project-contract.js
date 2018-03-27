@@ -152,7 +152,6 @@ export default class ProjectContract extends BaseContract {
         throw new UserError(`Got performance update for unknown address ${updateItemAddress}`,
           ErrorCodes.INVALID_DATA)
       }
-      // TODO: would be cool to validate that approvedItems and declinedItems didn't decrease
       const {approvedItems, declinedItems} = update[updateItemAddress]
       const updatingItemsCount = (approvedItems || 0) + (declinedItems || 0)
       if (approvedItems && approvedItems < 0) {
@@ -160,9 +159,21 @@ export default class ProjectContract extends BaseContract {
           + ` ${approvedItems} approved work items`,
           ErrorCodes.INVALID_DATA)
       }
+      if (approvedItems && approvedItems < existingItem.approvedItems) {
+        throw new UserError(`Invalid performance data for ${updateItemAddress}`
+          + ` ${approvedItems} approved work items in update,`
+          + ` ${existingItem.approvedItems} already approved`,
+          ErrorCodes.INVALID_DATA)
+      }
       if (declinedItems && declinedItems < 0) {
         throw new UserError(`Performance data for ${updateItemAddress} lists negative`
           + ` ${declinedItems} declined work items`,
+          ErrorCodes.INVALID_DATA)
+      }
+      if (declinedItems && declinedItems < existingItem.declinedItems) {
+        throw new UserError(`Invalid performance data for ${updateItemAddress}`
+          + ` ${approvedItems} declineed work items in update`,
+          + ` ${existingItem.declinedItems} already declineed`,
           ErrorCodes.INVALID_DATA)
       }
       if (existingItem.totalItems !== updatingItemsCount) {

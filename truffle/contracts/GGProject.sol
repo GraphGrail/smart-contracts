@@ -80,12 +80,16 @@ contract GGProject {
 
     require(_approvalCommissionFractionThousands <= 1000);
     require(_disapprovalCommissionFractionThousands <= 1000);
+    require(_approvalCommissionFractionThousands + _disapprovalCommissionFractionThousands <= 1000);
 
     require(_totalWorkItems < 2 ** 32);
     require(_autoApprovalTimeoutSec < 2 ** 32);
 
-    client = _clientAddress;
     tokenContract = ERC20(_tokenContractAddress);
+    require(tokenContract.balanceOf(_clientAddress) >= 0); // check it's ERC20 actually
+
+    client = _clientAddress;
+
     approvalCommissionBenificiary = _approvalCommissionBenificiaryAddress;
     disapprovalCommissionBeneficiary = _disapprovalCommissionBeneficiaryAddress;
 

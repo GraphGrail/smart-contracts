@@ -89,9 +89,9 @@ export default class ProjectContract extends BaseContract {
 
   async activate() {
     const {tokenBalance, totalWorkItems, workItemPrice, state, client} = await this.describe()
-    this.assertActivationTokenBalance(workItemPrice.mul(totalWorkItems), tokenBalance)
-    this.assertContractStateIs(State.New, state)
-    this.assertActorIs(client)
+    this._assertActivationTokenBalance(workItemPrice.mul(totalWorkItems), tokenBalance)
+    this._assertContractStateIs(State.New, state)
+    this._assertActorIs(client)
 
     return this._callContractMethod('activate')
   }
@@ -99,8 +99,8 @@ export default class ProjectContract extends BaseContract {
   async updateTotals(totalsMap) {
     const {state, owner} = await this.describe()
 
-    this.assertActorIs(owner)
-    this.assertContractStateIs(State.Active, state)
+    this._assertActorIs(owner)
+    this._assertContractStateIs(State.Active, state)
 
     const {addresses, totals} = totalsToArrays(totalsMap)
 
@@ -121,9 +121,9 @@ export default class ProjectContract extends BaseContract {
     const [{state, client}, currentPerformanceMap] = await Promise.all([this.describe(),
       this.getPerformance()])
 
-    this.assertContractStateIs(State.Active, state)
-    this.assertActorIs(client)
-    this.assertPerformanceUpdateIsValid(currentPerformanceMap, performanceUpdate)
+    this._assertContractStateIs(State.Active, state)
+    this._assertActorIs(client)
+    this._assertPerformanceUpdateIsValid(currentPerformanceMap, performanceUpdate)
 
     const {addresses, approved, declined} = performanceToArrays(performanceUpdate)
 
@@ -152,16 +152,16 @@ export default class ProjectContract extends BaseContract {
   async finalize() {
     const {state, client, canFinalize} = await this.describe()
 
-    this.assertContractStateIs(State.Active, state)
-    this.assertActorIs(client)
-    this.assertCanFinalize(canFinalize)
+    this._assertContractStateIs(State.Active, state)
+    this._assertActorIs(client)
+    this._assertCanFinalize(canFinalize)
 
     return this._callContractMethod('finalize')
   }
 
   async forceFinalize() {
     const {state, canForceFinalize} = await this.describe()
-    this.assertCanForceFinalize(state, canForceFinalize)
+    this._assertCanForceFinalize(state, canForceFinalize)
 
     let newState = state
 
@@ -171,7 +171,7 @@ export default class ProjectContract extends BaseContract {
     }
   }
 
-  assertActorIs(address) {
+  _assertActorIs(address) {
     if (!compareAddress(address, this.account)) {
       throw new UserError(
         `Only authorized address for action is ${address}, but you're running as ${this.account} now`,
@@ -181,7 +181,7 @@ export default class ProjectContract extends BaseContract {
     return
   }
 
-  assertContractStateIs(expected, fact) {
+  _assertContractStateIs(expected, fact) {
     if (expected !== fact) {
       throw new UserError(
         `Contract should be in ${stateToString(expected)} state, but is in `
@@ -191,7 +191,7 @@ export default class ProjectContract extends BaseContract {
     }
   }
 
-  assertActivationTokenBalance(requiredBalance, factBalance) {
+  _assertActivationTokenBalance(requiredBalance, factBalance) {
     if (factBalance.lt(requiredBalance)) {
       throw new UserError(
         `Failed to activate contract; need ${requiredBalance} tokens, have ${factBalance}`,
@@ -200,7 +200,7 @@ export default class ProjectContract extends BaseContract {
     }
   }
 
-  assertPerformanceUpdateIsValid(currentPerformanceData, update) {
+  _assertPerformanceUpdateIsValid(currentPerformanceData, update) {
     Object.keys(update).forEach(updateItemAddress => {
       const existingItem = currentPerformanceData[updateItemAddress]
       if (!existingItem) {
@@ -240,14 +240,14 @@ export default class ProjectContract extends BaseContract {
     return
   }
 
-  assertCanFinalize(canFinalize) {
+  _assertCanFinalize(canFinalize) {
     if (!canFinalize) {
       throw new UserError(`Contract has pending work and couldn't be finalized`,
         ErrorCodes.INVALID_CONTRACT_STATE)
     }
   }
 
-  assertCanForceFinalize(state, canForceFinalize) {
+  _assertCanForceFinalize(state, canForceFinalize) {
     if (state !== State.Active && state !== State.ForceFinalizing) {
       throw new UserError(
         `You can only force-finalize contract in ACTIVE or FORCE_FINALIZING state, ` +

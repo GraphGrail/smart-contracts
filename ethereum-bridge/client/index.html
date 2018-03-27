@@ -49,31 +49,7 @@
           app.appendChild(actionButton)
         })
 
-var address
-        window.graphGrailEther.init(tokenContractAddress, 1337, 'http://localhost:3000/api')
-        .then(window.graphGrailEther.getClientAddress)
-        .then(a => address = a)
-        .then(function() {
-            return Promise.all([
-          // fetch('http://localhost:3000/api/credit-account', {
-          //   method: 'POST',
-          //   headers: new Headers({
-          //     'Accept': 'application/json',
-          //     'Content-Type': 'application/json',
-          //   }),
-          //   body: JSON.stringify({
-          //     callback: '',
-          //     payload: {
-          //       tokenContractAddress: tokenContractAddress,
-          //       recepientAddress: address,
-          //       etherValue: '200',
-          //       tokenValue: '200'
-          //     }
-          //   })
-          // })
-          // window.graphGrailEther.transferTokensTo(someOtherAddress, '1'),
-          // window.graphGrailEther.activateContract(contractAddress)
-        ])})
+        window.graphGrailEther.init(tokenContractAddress, 1337)
       }
     </script>
   </body>

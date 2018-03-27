@@ -6,7 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "precommit": "npm run fix",
     "fix": "prettier --write --list-different 'src/**/*.js' || true",
-    "start": "node index.js | pino"
+    "start": "node index.js | pino --errorProps '*'"
   },
   "dependencies": {
     "@koa/cors": "^2.2.1",

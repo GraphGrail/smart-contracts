@@ -40,7 +40,7 @@ function logErrorData(err, taskId) {
     error: response.error,
     taskId: taskId,
   }
-  pino.error(logData, 'response to outgoing request failed')
+  pino.error(err, logData, 'outgoing request failed')
 }
 
 export default function notifyWhenCompleted(httpCallback, promise) {
@@ -55,7 +55,7 @@ export default function notifyWhenCompleted(httpCallback, promise) {
     })
 
   const onError = err => {
-    pino.error({taskId, err}, 'task failed')
+    pino.error(err, {taskId}, 'task failed')
     return postToCallback(httpCallback, {
       taskId: taskId,
       success: false,

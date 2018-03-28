@@ -42,7 +42,7 @@ function logRequest(ctx) {
 }
 
 function logResponse(ctx, json) {
-  ctx.log.info({response: json}, 'response is ready')
+  ctx.log.info({response: json}, 'response')
 }
 
 // Public API
@@ -60,16 +60,16 @@ router.get('/api/check-balances/:address', async ctx => {
 
   const address = ctx.params['address']
   if (!address.match(ETH_ADDRESS_REGEX)) {
-    ctx.throw(400, JSON.stringify({error: 'address is invalid'}))
+    throw(new UserError('address is invalid', ErrorCodes.INVALID_DATA))
   }
 
   const tokenAddress = ctx.request.query['tokenAddress']
   if (!tokenAddress) {
-    ctx.throw(400, JSON.stringify({error: 'token address missed'}))
+    throw(new UserError('token address missed', ErrorCodes.INVALID_DATA))
   }
 
   if (!tokenAddress.match(ETH_ADDRESS_REGEX)) {
-    ctx.throw(400, JSON.stringify({error: 'token address is invalid'}))
+    throw(new UserError('token address is invalid', ErrorCodes.INVALID_DATA))
   }
 
   const token = await TokenContract.at(tokenAddress)
@@ -102,7 +102,7 @@ router.post('/api/deploy-contract', koaBody, ctx => {
   const {error, value} = Joi.validate(ctx.request.body, schema)
 
   if (error !== null) {
-    ctx.throw(400, JSON.stringify({error: error.details[0].message}))
+    throw(new UserError(error.details[0].message, ErrorCodes.INVALID_DATA))
   }
 
   const {callback, payload} = ctx.request.body
@@ -137,7 +137,7 @@ router.post('/api/update-completed-work', koaBody, async ctx => {
   const {error, value} = Joi.validate(ctx.request.body, schema)
 
   if (error !== null) {
-    ctx.throw(400, JSON.stringify({error: error.details[0].message}))
+    throw(new UserError(error.details[0].message, ErrorCodes.INVALID_DATA))
   }
 
   const {callback, contractAddress, payload} = ctx.request.body
@@ -159,19 +159,10 @@ router.get('/api/contract-status/:address', async ctx => {
 
   const address = ctx.params['address']
   if (!address.match(ETH_ADDRESS_REGEX)) {
-    ctx.throw(400, JSON.stringify({error: 'address is invalid'}))
+    throw(new UserError('address is invalid', ErrorCodes.INVALID_DATA))
   }
 
-  let contract
-  try {
-    contract = await ProjectContract.at(address)
-  } catch (err) {
-    if (err.code === ErrorCodes.CONTRACT_NOT_FOUND) {
-      ctx.throw(404, JSON.stringify({error: err.message}))
-    } else {
-      ctx.throw(500, JSON.stringify({error: err.message}))
-    }
-  }
+  let contract = await ProjectContract.at(address)
 
   const [{state, ...other}, performance] = await Promise.all([contract.describe(),
     contract.getPerformance()])
@@ -196,7 +187,7 @@ router.post('/api/force-finalize', koaBody, ctx => {
   const {error, value} = Joi.validate(ctx.request.body, schema)
 
   if (error !== null) {
-    ctx.throw(400, JSON.stringify({error: error.details[0].message}))
+    throw(new UserError(error.details[0].message, ErrorCodes.INVALID_DATA))
   }
 
   const {callback, contractAddress} = ctx.request.body
@@ -229,7 +220,7 @@ router.post('/api/credit-account', koaBody, ctx => {
   const {error, value} = Joi.validate(ctx.request.body, schema)
 
   if (error !== null) {
-    ctx.throw(400, JSON.stringify({error: error.details[0].message}))
+    throw(new UserError(error.details[0].message, ErrorCodes.INVALID_DATA))
   }
 
   const {
@@ -290,29 +281,16 @@ if (config.isTestRun) {
     const {error, value} = Joi.validate(ctx.request.body, schema)
 
     if (error !== null) {
-      ctx.throw(400, JSON.stringify({error: error.details[0].message}))
+      throw(new UserError(error.details[0].message, ErrorCodes.INVALID_DATA))
     }
 
     const {actorAddress, contractAddress} = ctx.request.body
 
     let contract
-    try {
-      let token = await TokenContract.at("0x436e362ac2c1d5f88986b7553395746446922be2")
-      await token.transfer(contractAddress, 1000)
-      contract = await ProjectContract.at(contractAddress)
-      await contract.activate()
-    } catch (err) {
-      if (err.code === ErrorCodes.INSUFFICIENT_ETHER_BALANCE) {
-        ctx.throw(400, JSON.stringify({error: err.message}))
-      }
-      if (err.code === ErrorCodes.INSUFFICIENT_TOKEN_BALANCE) {
-        ctx.throw(400, JSON.stringify({error: err.message}))
-      }
-      if (err.code === ErrorCodes.CONTRACT_NOT_FOUND) {
-        ctx.throw(404, JSON.stringify({error: err.message}))
-      }
-      throw err
-    }
+    let token = await TokenContract.at("0x436e362ac2c1d5f88986b7553395746446922be2")
+    await token.transfer(contractAddress, 1000)
+    contract = await ProjectContract.at(contractAddress)
+    await contract.activate()
 
     ctx.body = {status: 'ok'}
     logResponse(ctx, ctx.body)
@@ -331,23 +309,13 @@ if (config.isTestRun) {
     const {error, value} = Joi.validate(ctx.request.body, schema)
 
     if (error !== null) {
-      ctx.throw(400, JSON.stringify({error: error.details[0].message}))
+      throw(new UserError(error.details[0].message, ErrorCodes.INVALID_DATA))
     }
 
     const {actorAddress, contractAddress, workers} = ctx.request.body
 
-    try {
-      const contract = await ProjectContract.at(contractAddress)
-      await contract.updatePerformance(workers)
-    } catch (err) {
-      if (err.code === ErrorCodes.INSUFFICIENT_ETHER_BALANCE) {
-        ctx.throw(400, JSON.stringify({error: err.message}))
-      }
-      if (err.code === ErrorCodes.CONTRACT_NOT_FOUND) {
-        ctx.throw(404, JSON.stringify({error: err.message}))
-      }
-      throw err
-    }
+    const contract = await ProjectContract.at(contractAddress)
+    await contract.updatePerformance(workers)
 
     ctx.body = {status: 'ok'}
     logResponse(ctx, ctx.body)
@@ -364,22 +332,12 @@ if (config.isTestRun) {
     const {error, value} = Joi.validate(ctx.request.body, schema)
 
     if (error !== null) {
-      ctx.throw(400, JSON.stringify({error: error.details[0].message}))
+      throw(new UserError(error.details[0].message, ErrorCodes.INVALID_DATA))
     }
     const {actorAddress, contractAddress} = ctx.request.body
 
-    try {
-      const contract = await ProjectContract.at(contractAddress)
-      await contract.finalize()
-    } catch (err) {
-      if (err.code === ErrorCodes.INSUFFICIENT_ETHER_BALANCE) {
-        ctx.throw(400, JSON.stringify({error: err.message}))
-      }
-      if (err.code === ErrorCodes.CONTRACT_NOT_FOUND) {
-        ctx.throw(404, JSON.stringify({error: err.message}))
-      }
-      throw err
-    }
+    const contract = await ProjectContract.at(contractAddress)
+    await contract.finalize()
 
     ctx.body = {status: 'ok'}
     logResponse(ctx, ctx.body)

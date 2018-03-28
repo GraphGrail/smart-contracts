@@ -9,6 +9,7 @@ import Web3 from 'web3'
 
 import config from './config'
 import {router} from './routes'
+import errorMiddleware from './error-middleware'
 
 import {setWeb3Promise, getConnection} from '../../shared/utils/connection'
 import {promisifyCall} from '../../shared/utils/promisify'
@@ -81,6 +82,7 @@ async function run() {
 
   const app = new Koa()
 
+  app.use(errorMiddleware)
   app.use(KoaPinoLogger({
     serializers: {
       req: (req) => {

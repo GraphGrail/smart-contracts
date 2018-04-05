@@ -1,0 +1,14 @@
+FROM ethereum/client-go
+
+RUN apk add --no-cache bash
+RUN apk add --no-cache perl
+
+WORKDIR /opt/ethereum
+ADD ./local-dev-net /opt/ethereum
+
+RUN ./run-geth.sh
+
+ENTRYPOINT ["geth", "--rpc", "--rpcapi=db,eth,net,web3,personal", \
+            "--rpcaddr=0.0.0.0", "--rpccorsdomain=*", "--rpcvhosts=*"]
+
+CMD ["--dev", "--dev.period=1", "--networkid=1337", "--datadir=.blockchain", "--rpcport=9545", "--mine"]

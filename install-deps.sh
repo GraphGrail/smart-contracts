@@ -1,16 +1,25 @@
-#!/usr/bin/env bash
+#!/bin/sh
 set -e
 
-printf '\n%s\n\n' '==> Installing shared dependencies...'
+echo
+echo "==> Installing shared dependencies..."
+echo
 npm install
 
-printf '\n%s\n\n' '==> Installing test dependencies...'
+echo
+echo "==> Installing test dependencies..."
+echo
 (cd truffle && npm install)
 
-printf '\n%s\n\n' '==> Installing server dependencies...'
+echo
+echo "==> Installing server dependencies..."
+echo
 (cd ethereum-bridge/server && npm install)
 
-printf '\n%s\n\n' '==> Installing client dependencies...'
+echo
+echo "==> Installing client dependencies..."
+echo
 (cd ethereum-bridge/client && npm install)
 
-printf '\n%s\n' '==> Done!'
+echo
+echo "==> Done!"

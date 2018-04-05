@@ -1,0 +1,31 @@
+version: '2'
+services:
+  geth-local:
+    build:
+      context: ./
+      dockerfile: .docker/Dockerfile.geth-local
+    volumes:
+      - ./local-dev-net:/opt/ethereum
+      - /opt/ethereum/.blockchain
+    ports:
+      - "9545:9545"
+  node:
+    build:
+      context: ./
+      dockerfile: .docker/Dockerfile.node
+    depends_on: [geth-local]
+    tty: true
+    links:
+      - "geth-local"
+    environment:
+      - GG_SERVER_HOST=0.0.0.0
+      - GG_SERVER_PORT=3000
+      - GG_SERVER_RPC_CONNECTION=http://geth-local:9545
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/opt/app
+      - /opt/app/node_modules
+      - /opt/app/truffle/node_modules
+      - /opt/app/ethereum-bridge/server/node_modules
+      - /opt/app/ethereum-bridge/client/node_modules

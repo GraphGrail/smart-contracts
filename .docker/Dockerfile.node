@@ -1,5 +1,7 @@
 FROM node:alpine
 
+USER root
+
 RUN apk add --no-cache g++ \
     && apk add --no-cache make \
     && apk add --no-cache git \

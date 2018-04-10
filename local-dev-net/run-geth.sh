@@ -3,7 +3,7 @@ set -e
 
 print_help_and_exit() {
   echo "
-./run-geth [-hRu] [-b N_SEC]
+./run-geth [-hru] [-b N_SEC] [-d DATADIR]
 
   -h | --help
 
@@ -12,6 +12,10 @@ print_help_and_exit() {
   -r | --reset
 
      Reset blockchain state.
+
+  -d | --datadir
+
+     Path where blockchain data stored, default .blockchain
 
   -u | --unlock
 
@@ -31,7 +35,7 @@ function join {
   echo "$*";
 }
 
-ACC=(
+acc=(
   '0x627306090abab3a6e1400e9345bc60c78a8bef57'
   '0xf17f52151ebef6c7334fad080c5704d77216b732'
   '0xc5fdf4076b8f3a5357c5e395ab970b5b54098fef'
@@ -44,11 +48,13 @@ ACC=(
   '0x5aeda56215b167893e80b4fe645ba6d5bab767de'
 )
 
-GETH_MINIMUM_VERSION='1.8.2'
+reset=0
+init=0
+geth_minimum_version='1.8.2'
+datadir=.blockchain
+dev_period=1
+accounts_to_unlock=$(join , ${acc[@]})
 
-DEV_PERIOD=1
-RESET=0
-ACCOUNTS_TO_UNLOCK=$(join , ${ACC[@]})
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -56,15 +62,19 @@ while [ "$#" -gt 0 ]; do
       print_help_and_exit
       ;;
     -r|--reset)
-      RESET=1
+      reset=1
       shift
       ;;
     -b|--block-each-sec)
-      DEV_PERIOD="$2"
+      dev_period="$2"
+      shift; shift
+      ;;
+    -d|--datadir)
+      datadir="$2"
       shift; shift
       ;;
     -u|--unlock)
-      UNLOCK="$2"
+      unlock="$2"
       shift; shift
       ;;
     *)
@@ -94,45 +104,63 @@ function ver() {
   printf "%04d%04d%04d%04d" $(echo "$1" | tr '.' ' ')
 }
 
-geth_full_version=$("$geth_bin" version | grep -e '^Version:' | perl -pe 's/[^\d]*(\d.*)/\1/g')
-geth_version=$(echo $geth_full_version | perl -pe 's/-.*//')
+# geth_full_version=$("$geth_bin" version | grep -e '^Version:' | perl -pe 's/[^\d]*(\d.*)/\1/g')
+# geth_version=$(echo $geth_full_version | perl -pe 's/-.*//')
+geth_version=$("$geth_bin" version | grep -e '^Version:' | sed -n '/^Version: /s/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/p')
 
-if [ $(ver "$GETH_MINIMUM_VERSION") -gt $(ver "$geth_version") ]; then
+if [ $(ver "$geth_minimum_version") -gt $(ver "$geth_version") ]; then
   echo
-  echo "Error: the minimum geth version is $GETH_MINIMUM_VERSION, you have $geth_full_version."
+  echo "Error: the minimum geth version is ${geth_minimum_version}, you have ${geth_version}."
   echo "Please update your geth and run this command again. You can also"
   echo "build geth yourself and place the built binary into this directory."
   echo
   exit 1
 fi
 
-if [ "$RESET" = 1 ]; then
+if [ ! -d "${datadir}/geth/" ]; then
+    echo 'Empty blockchain dir!!!'
+    reset=0
+    init=1
+fi
+
+if [ "$reset" = 1 ]; then
   echo
   echo 'Resetting blockchain...'
   echo
-  rm -rf .blockchain
+  rm -rf "${datadir}/*"
+  init=1
+fi
+
+if [ "$init" = 1 ]; then
+  echo
+  echo 'Initing blockchain...'
+  echo
   tar -xzf blockchain.tar.gz
-else
-  echo
-  echo 'Not resetting blockchain'
-  echo
-  if ! [ -d '.blockchain' ]; then
-    tar -xzf blockchain.tar.gz
+  if [ "$datadir" != ".blockchain" ]; then
+    mv .blockchain/* "${datadir}/"
   fi
+fi
+
+geth_args=(
+    '--networkid=1337'
+    '--rpc'
+    '--rpcapi=db,eth,net,web3,personal'
+    '--rpcport=9545'
+    '--rpcaddr=0.0.0.0'
+    '--rpccorsdomain=*'
+    '--rpcvhosts=*'
+    '--mine'
+    "--dev.period=${dev_period}"
+    '--dev'
+    "--datadir=${datadir}"
+)
+if [ "$init" = 1 ]; then
+    geth_args+=('--password=geth-passwords.txt')
+    geth_args+=("--unlock=${accounts_to_unlock}")
 fi
 
 set -x
 
 # For network id, see: https://github.com/ethereum/go-ethereum/blob/6d6a5a9/params/config.go#L92
 #
-exec "$geth_bin" \
-  --dev \
-  --networkid=1337 \
-  --datadir='.blockchain' \
-  --rpc --rpcapi='db,eth,net,web3,personal' \
-  --rpcport '9545' --rpcaddr '127.0.0.1' --rpccorsdomain '*' \
-  --mine \
-  --dev.period="$DEV_PERIOD" \
-  --password geth-passwords.txt \
-  --unlock "$ACCOUNTS_TO_UNLOCK" \
-  console
+exec "$geth_bin" "${geth_args[@]}"

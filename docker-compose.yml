@@ -5,8 +5,7 @@ services:
       context: ./
       dockerfile: .docker/Dockerfile.geth-local
     volumes:
-      - ./local-dev-net:/opt/ethereum
-      - /opt/ethereum/.blockchain
+      - blockchain:/opt/.blockchain
     ports:
       - "9545:9545"
   node:
@@ -29,3 +28,5 @@ services:
       - /opt/app/truffle/node_modules
       - /opt/app/ethereum-bridge/server/node_modules
       - /opt/app/ethereum-bridge/client/node_modules
+volumes:
+  blockchain:

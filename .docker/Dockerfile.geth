@@ -1,0 +1,9 @@
+FROM ethereum/client-go
+
+VOLUME /opt/.rinkeby
+
+ENTRYPOINT ["geth"]
+
+CMD ["--rinkeby", '--rpc', '--rpcapi=db,eth,net,web3,personal', \
+     "--rpcport=8545", "--rpcaddr=0.0.0.0", "--rpccorsdomain=*", "--rpcvhosts=*", \
+     "--datadir=/opt/.rinkeby"]

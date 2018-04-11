@@ -75,7 +75,11 @@ async function _init(tokenContractAddress, expectedNetworkId) {
 }
 
 export function isInitialized() {
-  return isInitializing || moduleIsInitialized
+  return moduleIsInitialized
+}
+
+export function isInitialization() {
+  return isInitializing
 }
 
 function assertInitialized() {

@@ -1,5 +1,7 @@
 FROM ethereum/client-go
 
+USER root
+
 VOLUME /opt/.rinkeby
 
 ENTRYPOINT ["geth"]

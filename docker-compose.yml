@@ -6,8 +6,10 @@ services:
       dockerfile: .docker/Dockerfile.geth
     volumes:
       - rinkeby:/opt/.rinkeby
+    command: ["--rinkeby", '--rpc', '--rpcapi=db,eth,net,web3,personal', "--rpcport=8545", "--rpcaddr=0.0.0.0", "--rpccorsdomain=*", "--rpcvhosts=*", "--datadir=/opt/.rinkeby", "--unlock=0x389ED518dcaA84F55C74032e446205555cb94fC7", "--password=/opt/.unlock_pass"]
+    expose:
+      - "8545"
     ports:
-      - "8545:8545"
       - "30303:30303"
   node:
     build:
@@ -22,7 +24,8 @@ services:
       - GG_SERVER_PORT=3000
       - GG_SERVER_RPC_CONNECTION=http://geth:8545
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
+    command: ["./wait-for", "geth:8545", "--", "node", "index.js"]
     volumes:
       - ./:/opt/app
       - ./truffle/build:/opt/app/truffle/build

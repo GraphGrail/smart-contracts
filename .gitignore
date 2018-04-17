@@ -2,3 +2,4 @@
 **/.blockchain/
 *.log
 *.sublime-workspace
+.unlock_pass

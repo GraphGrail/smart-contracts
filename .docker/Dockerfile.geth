@@ -2,6 +2,7 @@ FROM ethereum/client-go
 
 USER root
 
+COPY ./local-dev-net/.unlock_pass /opt/.unlock_pass
 VOLUME /opt/.rinkeby
 
 ENTRYPOINT ["geth"]

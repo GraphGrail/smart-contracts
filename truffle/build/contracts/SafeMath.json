@@ -1,14 +1,14 @@
 {
   "contractName": "SafeMath",
   "abi": [],
-  "bytecode": "0x60606040523415600e57600080fd5b603580601b6000396000f3006060604052600080fd00a165627a7a723058208f026c9d14df0c64c69dc71ae2f4f04cfeddfa1cc5e2a0d530fc4a3060335ca00029",
-  "deployedBytecode": "0x6060604052600080fd00a165627a7a723058208f026c9d14df0c64c69dc71ae2f4f04cfeddfa1cc5e2a0d530fc4a3060335ca00029",
+  "bytecode": "0x60606040523415600e57600080fd5b603580601b6000396000f3006060604052600080fd00a165627a7a72305820fd7741061cf19473684ee6a41204205fde9db23e9da20bb15c0135e17e2d74b40029",
+  "deployedBytecode": "0x6060604052600080fd00a165627a7a72305820fd7741061cf19473684ee6a41204205fde9db23e9da20bb15c0135e17e2d74b40029",
   "sourceMap": "214:682:5:-;;;;;;;;;;;;;;;;;",
   "deployedSourceMap": "214:682:5:-;;;;;",
   "source": "// Taken from github.com/OpenZeppelin/zeppelin-solidity/blob/647fc13/contracts/math/SafeMath.sol\n\npragma solidity ^0.4.17;\n\n/**\n * @title SafeMath\n * @dev Math operations with safety checks that throw on error\n */\nlibrary SafeMath {\n  function mul(uint256 a, uint256 b) internal pure returns (uint256) {\n    uint256 c = a * b;\n    assert(a == 0 || c / a == b);\n    return c;\n  }\n\n  function div(uint256 a, uint256 b) internal pure returns (uint256) {\n    // assert(b > 0); // Solidity automatically throws when dividing by 0\n    uint256 c = a / b;\n    // assert(a == b * c + a % b); // There is no case in which this doesn't hold\n    return c;\n  }\n\n  function sub(uint256 a, uint256 b) internal pure returns (uint256) {\n    assert(b <= a);\n    return a - b;\n  }\n\n  function add(uint256 a, uint256 b) internal pure returns (uint256) {\n    uint256 c = a + b;\n    assert(c >= a);\n    return c;\n  }\n}\n",
-  "sourcePath": "/Users/sam/dev/projects/gg/smart-contracts/truffle/contracts/SafeMath.sol",
+  "sourcePath": "/opt/app/truffle/contracts/SafeMath.sol",
   "ast": {
-    "absolutePath": "/Users/sam/dev/projects/gg/smart-contracts/truffle/contracts/SafeMath.sol",
+    "absolutePath": "/opt/app/truffle/contracts/SafeMath.sol",
     "exportedSymbols": {
       "SafeMath": [
         1768
@@ -1215,7 +1215,7 @@
     "src": "98:799:5"
   },
   "legacyAST": {
-    "absolutePath": "/Users/sam/dev/projects/gg/smart-contracts/truffle/contracts/SafeMath.sol",
+    "absolutePath": "/opt/app/truffle/contracts/SafeMath.sol",
     "exportedSymbols": {
       "SafeMath": [
         1768
@@ -2426,6 +2426,12 @@
     "version": "0.4.19+commit.c4cbbb05.Emscripten.clang"
   },
   "networks": {
+    "4": {
+      "events": {},
+      "links": {},
+      "address": "0xf7a83971a16bbc7da02190ba3adbf42f7858b694",
+      "transactionHash": "0xcb664c2bb35cbedce4a84669cd5e1f5dfa792f6eedd2a67b399c1bf3d2db1395"
+    },
     "1337": {
       "events": {},
       "links": {},
@@ -2434,5 +2440,5 @@
     }
   },
   "schemaVersion": "2.0.0",
-  "updatedAt": "2018-03-27T19:17:06.267Z"
+  "updatedAt": "2018-04-16T17:34:22.509Z"
 }

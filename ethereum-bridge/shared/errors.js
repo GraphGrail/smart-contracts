@@ -9,7 +9,11 @@ export class UserError extends Error {
       source: {value: sourceErr},
     })
 
-    Error.captureStackTrace(this, this.constructor)
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, this.constructor);
+    } else {
+      this.stack = (new Error()).stack;
+    }
   }
 
   static from(err, prependMessage, code) {

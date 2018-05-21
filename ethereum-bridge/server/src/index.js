@@ -14,8 +14,8 @@ import errorMiddleware from './error-middleware'
 import {setWeb3Promise, getConnection} from '../../shared/utils/connection'
 import {promisifyCall} from '../../shared/utils/promisify'
 
-const ACCOUNT_LOW_BALANCE = new BigNumber('5e17') // 0.5 ETH
-const ACCOUNT_CRITICAL_LOW_BALANCE = new BigNumber('1e16') // 0.01 ETH
+const ACCOUNT_LOW_BALANCE = new BigNumber('1e16') // 0.01 ETH
+const ACCOUNT_CRITICAL_LOW_BALANCE = new BigNumber('1e15') // 0.001 ETH
 
 async function getWeb3() {
   const provider = new Web3.providers.HttpProvider(config.rpcConnection)

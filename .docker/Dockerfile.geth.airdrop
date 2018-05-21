@@ -1,0 +1,12 @@
+FROM ethereum/client-go
+
+USER root
+
+COPY ./local-dev-net/.unlock_pass /opt/.unlock_pass
+VOLUME /opt/.mainnet
+
+ENTRYPOINT ["geth"]
+
+CMD ['--syncmode=fast', '--rpc', '--rpcapi=db,eth,net,web3,personal', \
+     "--rpcport=8545", "--rpcaddr=0.0.0.0", "--rpccorsdomain=*", "--rpcvhosts=*", \
+     "--datadir=/opt/.mainnet"]

@@ -1,0 +1,16 @@
+FROM node:alpine
+
+USER root
+
+RUN apk add --no-cache g++ \
+    && apk add --no-cache make \
+    && apk add --no-cache git \
+    && apk add --no-cache python
+
+WORKDIR /opt/app
+ADD . /opt/app
+
+RUN ./install-deps.sh
+
+WORKDIR /opt/app/ethereum-bridge/server
+CMD ["node", "index.js"]

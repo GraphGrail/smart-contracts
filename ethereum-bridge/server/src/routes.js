@@ -229,14 +229,20 @@ router.post('/api/credit-account', koaBody, ctx => {
   } = ctx.request.body
 
   async function run() {
-    const token = await TokenContract.at(tokenContractAddress)
-    await token.transfer(recepientAddress, tokenValue)
+    if (new BigNumber(tokenValue).greaterThan(0)) {
+      const token = await TokenContract.at(tokenContractAddress)
+      await token.transfer(recepientAddress, tokenValue)
+    }
+
+    if (new BigNumber(etherValue).lessThanOrEqualTo(0)) {
+      return {success: true, error: null}
+    }
 
     const {web3, account} = await getConnection()
 
     const balance = await promisifyCall(web3.eth.getBalance, web3.eth, [account])
     if (new BigNumber('' + balance).lt(etherValue)) {
-      throw new UserError(`balance of address ${account} is insufficient to deploy this contract`,
+      throw new UserError(`balance of address ${account} is insufficient to credit this account`,
         ErrorCodes.INSUFFICIENT_ETHER_BALANCE)
     }
 

@@ -21,11 +21,20 @@ export async function inspectTransaction(txResultPromise) {
   const tx = await promisifyCall(web3.eth.getTransaction, web3.eth, [txResult.tx])
   const {receipt} = txResult
   const success = receipt.status !== undefined
-    ? receipt.status === '0x1' || receipt.status === 1 // Since Byzantium fork
+    ? +toBigNumber(receipt.status) === 1 // Since Byzantium fork
     : receipt.cumulativeGasUsed < tx.gas // Before Byzantium fork
   const txPriceWei = new BigNumber(tx.gasPrice).times(receipt.cumulativeGasUsed)
   const events = txResult.logs
     .map(log => log.event ? {name: log.event, args: log.args} : null)
     .filter(x => !!x)
   return {raw: txResult, success, txPriceWei, events}
+}
+
+
+function toBigNumber(val, defaultVal) {
+  try {
+    return new BigNumber(val)
+  } catch (err) {
+    return new BigNumber(defaultVal)
+  }
 }
